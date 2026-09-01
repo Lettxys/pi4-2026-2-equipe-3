@@ -1,0 +1,67 @@
+bug:
+  id: "BUG-001"
+
+  titulo: "[Módulo/Funcionalidade] - Descrição curta e objetiva do erro"
+
+  ambiente:
+    sistema: ""
+    ambiente: "" # Desenvolvimento | Homologação | Produção
+    url: ""
+    tela: ""
+    classe: ""
+    objeto: ""
+    api: ""
+    navegador: ""
+    navegador_versao: ""
+    sistema_operacional: ""
+    versao_aplicacao: ""
+    dispositivo: ""
+
+  classificacao:
+    severidade: "" # Crítica | Alta | Média | Baixa
+    prioridade: "" # Crítica | Alta | Média | Baixa
+    tipo: "" # Funcional | Visual | Performance | Segurança | Integração | Dados
+
+  pre_condicoes:
+    - ""
+
+  passos_para_reproduzir:
+    - "Passo 1"
+    - "Passo 2"
+    - "Passo 3"
+
+  resultado_obtido:
+    ""
+
+  resultado_esperado:
+    ""
+
+  frequencia:
+    tipo: "" # Sempre | Frequentemente | Intermitente | Raramente
+    percentual: ""
+
+  impacto:
+    descricao: ""
+
+  evidencias:
+    screenshots:
+      - ""
+    videos:
+      - ""
+    logs:
+      - ""
+    outros:
+      - ""
+
+  informacoes_adicionais:
+    observacoes: ""
+    workaround: ""
+    dados_para_reproducao: ""
+
+  rastreabilidade:
+    sprint: ""
+    historia: ""
+    requisito: ""
+    ambiente_execucao: ""
+    reportado_por: ""
+    data: ""

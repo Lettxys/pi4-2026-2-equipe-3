@@ -1,0 +1,93 @@
+issue:
+  id: "TASK-001"
+
+  titulo: "[Módulo/Funcionalidade] - Descrição objetiva da tarefa"
+
+  tipo: "Tarefa" # Tarefa | Melhoria | Desenvolvimento | Configuração | Documentação
+
+  ambiente:
+    sistema: ""
+    ambiente: "" # Desenvolvimento | Homologação | Produção
+    url: ""
+    tela: ""
+    classe: ""
+    objeto: ""
+    api: ""
+    navegador: ""
+    navegador_versao: ""
+    sistema_operacional: ""
+    versao_aplicacao: ""
+    dispositivo: ""
+
+  classificacao:
+    prioridade: "" # Crítica | Alta | Média | Baixa
+    complexidade: "" # Alta | Média | Baixa
+
+  contexto:
+    descricao: ""
+    justificativa: ""
+
+  objetivo:
+    ""
+
+  escopo:
+    incluir:
+      - ""
+
+    nao_incluir:
+      - ""
+
+  pre_condicoes:
+    - ""
+
+  tarefas:
+    - descricao: ""
+      status: "Pendente" # Pendente | Em andamento | Concluída
+      responsavel: ""
+
+  criterios_de_aceite:
+    - id: "CA-001"
+      descricao: ""
+      validacao: ""
+
+    - id: "CA-002"
+      descricao: ""
+      validacao: ""
+
+  resultado_esperado:
+    ""
+
+  evidencias:
+    screenshots:
+      - ""
+    videos:
+      - ""
+    logs:
+      - ""
+    outros:
+      - ""
+
+  dependencias:
+    - ""
+
+  riscos:
+    - ""
+
+  informacoes_adicionais:
+    observacoes: ""
+    workaround: ""
+
+  rastreabilidade:
+    sprint: ""
+    historia: ""
+    requisito: ""
+    epic: ""
+    issue_relacionada:
+      - ""
+    reportado_por: ""
+    responsavel: ""
+    data_criacao: ""
+    prazo: ""
+
+  status:
+    atual: "Pendente" # Pendente | Em andamento | Em revisão | Concluída | Bloqueada | Cancelada

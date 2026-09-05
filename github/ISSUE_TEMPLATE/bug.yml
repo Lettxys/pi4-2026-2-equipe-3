@@ -1,67 +1,102 @@
-bug:
-  id: "BUG-001"
+name: Bug Report
+description: Relate um erro ou comportamento inesperado para nos ajudar a identificar e corrigir o problema.
+title: "[Bug]: "
+labels: ["bug", "triage"]
+assignees:
+  - seu-usuario
 
-  titulo: "[Módulo/Funcionalidade] - Descrição curta e objetiva do erro"
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ## 🐛 Bug Report
 
-  ambiente:
-    sistema: ""
-    ambiente: "" # Desenvolvimento | Homologação | Produção
-    url: ""
-    tela: ""
-    classe: ""
-    objeto: ""
-    api: ""
-    navegador: ""
-    navegador_versao: ""
-    sistema_operacional: ""
-    versao_aplicacao: ""
-    dispositivo: ""
+        Obrigado por dedicar um tempo para relatar este problema!
+        Preencha as informações abaixo com o máximo de detalhes possível.
 
-  classificacao:
-    severidade: "" # Crítica | Alta | Média | Baixa
-    prioridade: "" # Crítica | Alta | Média | Baixa
-    tipo: "" # Funcional | Visual | Performance | Segurança | Integração | Dados
+  - type: input
+    id: title
+    attributes:
+      label: Título do Bug
+      description: Descreva o problema de forma curta, objetiva e indicando o módulo ou funcionalidade afetada.
+      placeholder: "ex. Carrinho de compras - Botão de finalizar pagamento não responde"
+    validations:
+      required: true
 
-  pre_condicoes:
-    - ""
+  - type: textarea
+    id: expected-result
+    attributes:
+      label: Resultado Esperado
+      description: Descreva qual deveria ser o comportamento correto do sistema.
+      placeholder: |
+        Exemplo:
+        O usuário deveria ser redirecionado para a tela de pagamento.
+    validations:
+      required: true
 
-  passos_para_reproduzir:
-    - "Passo 1"
-    - "Passo 2"
-    - "Passo 3"
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Passos para Reproduzir
+      description: Informe passo a passo como reproduzir o problema.
+      placeholder: |
+        1. Acesse a página de produtos.
+        2. Adicione o item X ao carrinho.
+        3. Clique em "Finalizar Compra".
+        4. Observe o erro.
+    validations:
+      required: true
 
-  resultado_obtido:
-    ""
+  - type: dropdown
+    id: severity
+    attributes:
+      label: Severidade
+      description: Qual o impacto do problema no sistema ou para o usuário?
+      options:
+        - Crítica
+        - Alta
+        - Média
+        - Baixa
+    validations:
+      required: true
 
-  resultado_esperado:
-    ""
+  - type: input
+    id: app-version
+    attributes:
+      label: Versão da Aplicação
+      description: Informe a versão ou build em que o problema foi identificado.
+      placeholder: "ex. v2.4.1 / Build 1542"
+    validations:
+      required: false
 
-  frequencia:
-    tipo: "" # Sempre | Frequentemente | Intermitente | Raramente
-    percentual: ""
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Evidências
+      description: Anexe capturas de tela, vídeos, logs do console ou outras evidências que ajudem na investigação.
+      placeholder: |
+        Arraste os arquivos para esta área ou cole os links das evidências.
 
-  impacto:
-    descricao: ""
+        Exemplos:
+        - Screenshot
+        - Gravação de tela
+        - Logs do console
+        - Response da API
+        - Stack trace
+    validations:
+      required: false
 
-  evidencias:
-    screenshots:
-      - ""
-    videos:
-      - ""
-    logs:
-      - ""
-    outros:
-      - ""
-
-  informacoes_adicionais:
-    observacoes: ""
-    workaround: ""
-    dados_para_reproducao: ""
-
-  rastreabilidade:
-    sprint: ""
-    historia: ""
-    requisito: ""
-    ambiente_execucao: ""
-    reportado_por: ""
-    data: ""
+  - type: textarea
+    id: additional-information
+    attributes:
+      label: Informações Adicionais
+      description: Adicione qualquer informação que possa ajudar na investigação, como observações, workaround ou condições específicas.
+      placeholder: |
+        Observações:
+        
+        Workaround:
+        
+        Dados utilizados para reprodução:
+    validations:
+      required: false
+```

@@ -1,9 +1,7 @@
 name: Bug Report
 description: Relate um erro ou comportamento inesperado para nos ajudar a identificar e corrigir o problema.
 title: "[Bug]: "
-labels: ["bug", "triage"]
-assignees:
-  - seu-usuario
+labels: ["tipo:bug"]
 
 body:
   - type: markdown

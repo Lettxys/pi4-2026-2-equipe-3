@@ -40,27 +40,12 @@ body:
     attributes:
       label: Escopo
       description: Informe o que deve fazer parte da tarefa e, se necessário, o que está fora do escopo.
-      placeholder: |
-        Incluir:
-        - Criar endpoint POST /api/orders.
-        - Validar os dados recebidos.
-        - Persistir o pedido.
-
-        Não incluir:
-        - Alterações no frontend.
-        - Implementação do pagamento.
-    validations:
-      required: true
-
-  - type: textarea
-    id: tasks
-    attributes:
-      label: Atividades
-      description: Liste as atividades necessárias para concluir a tarefa. Exemplo: `- [ ] Criar rota da API`, `- [ ] Implementar validações`...
       value: |
-        - [ ] 
-        - [ ] 
-        - [ ] 
+        **Incluir:**
+        - 
+
+        **Não incluir:**
+        -
     validations:
       required: true
 
@@ -68,7 +53,9 @@ body:
     id: acceptance-criteria
     attributes:
       label: Critérios de Aceite
-      description: Defina as condições que devem ser atendidas para considerar a tarefa concluída. Exemplo: `- [ ] A API deve aceitar requisições POST /api/orders`.
+      description: |
+        Liste as atividades necessárias para concluir a tarefa.
+        Exemplo: `- [ ] Criar rota da API`, `- [ ] Implementar validações`...
       value: |
         - [ ] 
         - [ ] 
@@ -125,23 +112,6 @@ body:
       required: false
       
   - type: textarea
-    id: evidence
-    attributes:
-      label: Evidências
-      description: Após a execução, adicione screenshots, vídeos, logs, testes ou outras evidências que comprovem a conclusão da tarefa.
-      placeholder: |
-        Arraste os arquivos para esta área ou cole os links das evidências.
-
-        Exemplos:
-        - Screenshot
-        - Gravação de tela
-        - Logs
-        - Resultado dos testes
-        - Response da API
-    validations:
-      required: false
-
-  - type: textarea
     id: additional-information
     attributes:
       label: Informações Adicionais
@@ -155,11 +125,4 @@ body:
     validations:
       required: false
 
-  - type: input
-    id: related-story
-    attributes:
-      label: História / Requisito relacionado
-      description: Informe a User Story, requisito, Epic ou Issue relacionada.
-      placeholder: "ex. US-123 / REQ-045 / #123"
-    validations:
-      required: false
+

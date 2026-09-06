@@ -13,9 +13,9 @@ body:
         Preencha as informações abaixo com o máximo de detalhes possível.
 
   - type: input
-    id: title
+    id: description
     attributes:
-      label: Título do Bug
+      label: Descrição do Bug
       description: Descreva o problema de forma curta, objetiva e indicando o módulo ou funcionalidade afetada.
       placeholder: "ex. Carrinho de compras - Botão de finalizar pagamento não responde"
     validations:

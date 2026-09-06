@@ -2,8 +2,6 @@ name: Task
 description: Registre uma tarefa, implementação ou atividade necessária para o projeto.
 title: "[Task]: "
 labels: ["task", "triage"]
-assignees:
-  - seu-usuario
 
 body:
   - type: markdown
@@ -58,12 +56,11 @@ body:
     id: tasks
     attributes:
       label: Atividades
-      description: Liste as atividades necessárias para concluir a tarefa.
-      placeholder: |
-        - [ ] Criar rota da API
-        - [ ] Implementar validações
-        - [ ] Implementar persistência
-        - [ ] Criar testes automatizados
+      description: Liste as atividades necessárias para concluir a tarefa. Exemplo: `- [ ] Criar rota da API`, `- [ ] Implementar validações`...
+      value: |
+        - [ ] 
+        - [ ] 
+        - [ ] 
     validations:
       required: true
 
@@ -71,12 +68,11 @@ body:
     id: acceptance-criteria
     attributes:
       label: Critérios de Aceite
-      description: Defina as condições que devem ser atendidas para considerar a tarefa concluída.
-      placeholder: |
-        - [ ] A API deve aceitar requisições POST /api/orders.
-        - [ ] Dados inválidos devem retornar erro apropriado.
-        - [ ] O pedido deve ser persistido no banco.
-        - [ ] A API deve retornar o ID do pedido criado.
+      description: Defina as condições que devem ser atendidas para considerar a tarefa concluída. Exemplo: `- [ ] A API deve aceitar requisições POST /api/orders`.
+      value: |
+        - [ ] 
+        - [ ] 
+        - [ ] 
     validations:
       required: true
 

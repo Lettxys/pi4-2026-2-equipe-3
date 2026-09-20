@@ -1,0 +1,80 @@
+# =========================
+# Visual Studio
+# =========================
+
+.vs/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# =========================
+# Build
+# =========================
+
+[Bb]in/
+[Oo]bj/
+[Dd]ebug/
+[Rr]elease/
+x64/
+x86/
+
+# =========================
+# NuGet
+# =========================
+
+*.nupkg
+*.snupkg
+packages/
+.nuget/
+
+# =========================
+# Testes / Coverage
+# =========================
+
+TestResults/
+*.trx
+coverage/
+coverage.xml
+
+# =========================
+# ASP.NET / .NET
+# =========================
+
+appsettings.Local.json
+
+# =========================
+# Logs
+# =========================
+
+*.log
+logs/
+
+# =========================
+# OS
+# =========================
+
+# Windows
+Thumbs.db
+Desktop.ini
+
+# macOS
+.DS_Store
+
+# Linux
+*~
+
+# =========================
+# Secrets / Environment
+# =========================
+
+.env
+.env.*
+!.env.example
+
+# =========================
+# Rider / JetBrains
+# =========================
+
+.idea/
+*.sln.iml

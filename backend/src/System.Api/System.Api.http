@@ -1,0 +1,6 @@
+@System.Api_HostAddress = http://localhost:3000
+
+GET {{System.Api_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

@@ -78,3 +78,20 @@ Desktop.ini
 
 .idea/
 *.sln.iml
+[Aa]gents.md
+[Cc]laude.md
+.claude/
+[Gg]emini.md
+.gemini/
+scratchpad.md
+context.md
+.cursor/
+.cursorrules
+.windsurf/
+.codeium/
+.aider*
+.aider.chat.history.md
+.aider.input.history
+.continue/
+*.chat.json
+.llm/

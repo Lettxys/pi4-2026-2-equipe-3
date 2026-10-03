@@ -52,7 +52,7 @@ aplicação — tudo roda dentro dos containers.
 Clone o repositório e crie o arquivo de ambiente:
 
 ```bash
-git clone <url-do-repositorio>
+git clone https://github.com/Lettxys/pi4-2026-2-equipe-3.git
 cd pi4-2026-2-equipe-3
 
 # Linux/macOS/Git Bash

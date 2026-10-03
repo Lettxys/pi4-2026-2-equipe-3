@@ -1,0 +1,23 @@
+# Artefatos de build do .NET
+**/bin/
+**/obj/
+
+# Arquivos de IDE / usuario
+**/.vs/
+**/.vscode/
+**/.idea/
+**/*.user
+**/*.suo
+**/*.userprefs
+**/*.sw?
+
+# Variaveis de ambiente (a configuracao vem do compose, via ".env" na raiz)
+**/.env
+**/.env.*
+
+# Este proprio arquivo
+Dockerfile
+.dockerignore
+
+# Logs
+**/*.log

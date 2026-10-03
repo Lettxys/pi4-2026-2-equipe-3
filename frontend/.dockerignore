@@ -1,0 +1,22 @@
+# Dependencias e builds (reinstalados dentro da imagem)
+node_modules
+dist
+build
+
+# Git / IDE
+.git
+.gitignore
+.vscode
+.idea
+
+# Variaveis de ambiente (a configuracao vem do compose, via ".env" na raiz)
+.env
+.env.*
+
+# Este proprio arquivo
+Dockerfile
+.dockerignore
+
+# Logs
+*.log
+npm-debug.log*

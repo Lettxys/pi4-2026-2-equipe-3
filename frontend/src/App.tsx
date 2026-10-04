@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { api } from './services/api';
 
 import Menu from './components/Menu';
 
@@ -10,6 +11,13 @@ import Tela5 from './pages/Tela5';
 
 export default function App() {
   const [tela, setTela] = useState(1);
+
+  useEffect(() => {
+    // Teste de conexão com o backend em container
+    api.get('/health')
+      .then((res) => console.log(' Conexão com o Backend estabelecida com sucesso:', res.data))
+      .catch((err) => console.error('Erro de comunicação com o Backend:', err));
+  }, []);
 
   return (
     <div className="min-h-screen bg-slate-900 text-white flex flex-col">

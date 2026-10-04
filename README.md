@@ -128,6 +128,7 @@ interpolação (`${NOME_DA_VARIAVEL}`) automaticamente.
 | `POSTGRES_PASSWORD` | `postgres` | Senha do usuário |
 | `POSTGRES_DB` | `isenta` | Nome do banco de dados |
 | `POSTGRES_PORT` | `5432` | Porta publicada no host (dentro do container é sempre `5432`) |
+| `POSTGRES_HOST` | `localhost` | Host do banco usado pela API. No Compose, o backend recebe `db` |
 
 > Alterar `POSTGRES_USER`, `POSTGRES_PASSWORD` ou `POSTGRES_DB` **depois** que o
 > volume `db_data` foi criado não tem efeito. Para recomeçar do zero:
@@ -162,12 +163,23 @@ interpolação (`${NOME_DA_VARIAVEL}`) automaticamente.
 | `BACKEND_PORT`, `ASPNETCORE_ENVIRONMENT`, `JWT_*` | container da API |
 | `FRONTEND_PORT`, `VITE_API_URL` | container do frontend |
 
-> ℹ️ **Estado atual:** o `compose.yaml` já injeta essas variáveis no container
-> da API, mas o `Program.cs` ainda não lê nenhuma delas — não há registro de
-> `DbContext`, nem string de conexão, CORS ou configuração de JWT. O serviço
-> `db` sobe e fica disponível para uso, mas a API ainda não conversa com ele.
-> A tabela acima descreve o que o Compose entrega ao container, não o que o
-> código já consome.
+> ℹ️ **Estado atual:** a API monta a conexão com o banco a partir das variáveis
+> `POSTGRES_*` e aplica as migrations ao subir. O `Program.cs` ainda não lê
+> `JWT_*` nem configura CORS.
+
+## Banco de dados
+
+Com o backend já rodando, para popular o banco com dados sintéticos (20 usuários, 17 processos, +10 linhas em
+cada tabela):
+
+```bash
+docker compose cp backend/src/System.Api/Data/Seed/seed.sql db:/tmp/seed.sql
+docker compose exec db sh -c "psql -U postgres -d isenta -v ON_ERROR_STOP=1 -f /tmp/seed.sql"
+```
+
+O script apaga os dados existentes antes de inserir.
+Senha para todos os usuários: `Senha@123`.
+Administrador: `admin@example.com`.
 
 ## Estrutura do projeto
 

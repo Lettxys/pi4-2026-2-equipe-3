@@ -1,0 +1,167 @@
+.registrar-overlay {
+  position: fixed;
+  inset: 0;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  background: rgba(0, 0, 0, 0.6);
+
+  z-index: 1000;
+}
+
+.registrar-modal {
+  position: relative;
+
+  width: 100%;
+  max-width: 430px;
+
+  padding: 32px;
+
+  background: white;
+  color: #0f172a;
+
+  border-radius: 16px;
+
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.4);
+}
+
+.registrar-fechar {
+  position: absolute;
+
+  top: 12px;
+  right: 18px;
+
+  border: none;
+  background: transparent;
+
+  color: #64748b;
+
+  font-size: 28px;
+
+  cursor: pointer;
+}
+
+.registrar-modal h2 {
+  margin: 0 0 8px;
+
+  font-size: 26px;
+}
+
+.registrar-linha {
+  width: 145px;
+  height: 4px;
+
+  margin-bottom: 24px;
+
+  background: #cbd5e1;
+
+  border-radius: 4px;
+}
+
+.registrar-form {
+  display: flex;
+  flex-direction: column;
+
+  gap: 14px;
+}
+
+.registrar-campo {
+  display: flex;
+  flex-direction: column;
+
+  gap: 6px;
+}
+
+.registrar-campo label {
+  font-size: 13px;
+}
+
+.registrar-campo input {
+  width: 100%;
+  box-sizing: border-box;
+
+  padding: 11px;
+
+  border: 1px solid #cbd5e1;
+  border-radius: 7px;
+
+  outline: none;
+}
+
+.registrar-campo input:focus {
+  border-color: #06b6d4;
+}
+
+.registrar-botao {
+  width: 100%;
+
+  padding: 12px;
+
+  border: none;
+  border-radius: 8px;
+
+  background: #06b6d4;
+  color: #020617;
+
+  font-weight: 600;
+
+  cursor: pointer;
+}
+
+.registrar-botao:hover {
+  background: #0891b2;
+}
+
+.registrar-botao:disabled {
+  opacity: 0.6;
+
+  cursor: not-allowed;
+}
+
+.registrar-erro {
+  padding: 10px;
+
+  border-radius: 6px;
+
+  background: #fee2e2;
+  color: #b91c1c;
+
+  font-size: 14px;
+}
+
+.registrar-sucesso {
+  padding: 10px;
+
+  border-radius: 6px;
+
+  background: #dcfce7;
+  color: #166534;
+
+  font-size: 14px;
+}
+
+.registrar-login {
+  display: flex;
+  justify-content: center;
+
+  gap: 5px;
+
+  margin-top: 18px;
+
+  color: #475569;
+
+  font-size: 14px;
+}
+
+.registrar-login button {
+  border: none;
+  background: transparent;
+
+  color: #0891b2;
+
+  font-weight: 600;
+
+  cursor: pointer;
+}

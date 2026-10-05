@@ -1,35 +1,45 @@
-import { useState, useEffect } from 'react';
-import { api } from './services/api';
+import { useState } from 'react';
 
-import Menu from './components/Menu';
+import Landing from './pages/Landing';
+import Login from './pages/Login';
+import Registrar from './pages/Registrar';
 
-import Tela1 from './pages/Tela1';
-import Tela2 from './pages/Tela2';
-import Tela3 from './pages/Tela3';
-import Tela4 from './pages/Tela4';
-import Tela5 from './pages/Tela5';
+type Tela =
+  | 'landing'
+  | 'login'
+  | 'registrar';
 
-export default function App() {
-  const [tela, setTela] = useState(1);
+function App() {
 
-  useEffect(() => {
-    // Teste de conexão com o backend em container
-    api.get('/health')
-      .then((res) => console.log(' Conexão com o Backend estabelecida com sucesso:', res.data))
-      .catch((err) => console.error('Erro de comunicação com o Backend:', err));
-  }, []);
+  const [tela, setTela] =
+    useState<Tela>('landing');
 
   return (
-    <div className="min-h-screen bg-slate-900 text-white flex flex-col">
-      <Menu mudarTela={setTela} />
+    <>
+      <Landing
+        abrirLogin={() => setTela('login')}
+        abrirRegistrar={() => setTela('registrar')}
+      />
 
-      <main className="flex-1 flex items-center justify-center p-4">
-        {tela === 1 && <Tela1 />}
-        {tela === 2 && <Tela2 />}
-        {tela === 3 && <Tela3 />}
-        {tela === 4 && <Tela4 />}
-        {tela === 5 && <Tela5 />}
-      </main>
-    </div>
+      {tela === 'login' && (
+        <Login
+          fechar={() => setTela('landing')}
+          abrirRegistrar={() =>
+            setTela('registrar')
+          }
+        />
+      )}
+
+      {tela === 'registrar' && (
+        <Registrar
+          fechar={() => setTela('landing')}
+          abrirLogin={() =>
+            setTela('login')
+          }
+        />
+      )}
+    </>
   );
 }
+
+export default App;

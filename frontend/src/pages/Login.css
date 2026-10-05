@@ -1,0 +1,195 @@
+.login-overlay {
+  position: fixed;
+  inset: 0;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  background: rgba(0, 0, 0, 0.6);
+
+  z-index: 1000;
+}
+
+.login-modal {
+  position: relative;
+
+  width: 100%;
+  max-width: 430px;
+
+  padding: 32px;
+
+  background: white;
+  color: #0f172a;
+
+  border-radius: 16px;
+
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.4);
+}
+
+.login-fechar {
+  position: absolute;
+
+  top: 12px;
+  right: 18px;
+
+  border: none;
+  background: transparent;
+
+  color: #64748b;
+
+  font-size: 28px;
+
+  cursor: pointer;
+}
+
+.login-modal h2 {
+  margin: 0 0 8px;
+
+  font-size: 26px;
+}
+
+.login-linha {
+  width: 145px;
+  height: 4px;
+
+  margin-bottom: 24px;
+
+  background: #cbd5e1;
+
+  border-radius: 4px;
+}
+
+.login-form {
+  display: flex;
+  flex-direction: column;
+
+  gap: 16px;
+}
+
+.login-campo {
+  display: flex;
+  flex-direction: column;
+
+  gap: 6px;
+}
+
+.login-campo label {
+  font-size: 13px;
+}
+
+.login-campo input {
+  width: 100%;
+  box-sizing: border-box;
+
+  padding: 11px;
+
+  border: 1px solid #cbd5e1;
+  border-radius: 7px;
+
+  outline: none;
+}
+
+.login-campo input:focus {
+  border-color: #06b6d4;
+}
+
+.login-opcoes {
+  display: flex;
+  justify-content: space-between;
+
+  font-size: 12px;
+}
+
+.login-opcoes label {
+  display: flex;
+  align-items: center;
+
+  gap: 5px;
+}
+
+.login-opcoes button {
+  border: none;
+  background: transparent;
+
+  color: #475569;
+
+  cursor: pointer;
+}
+
+.login-botao {
+  width: 100%;
+
+  padding: 12px;
+
+  border: none;
+  border-radius: 8px;
+
+  background: #06b6d4;
+  color: #020617;
+
+  font-weight: 600;
+
+  cursor: pointer;
+}
+
+.login-botao:hover {
+  background: #0891b2;
+}
+
+.login-botao:disabled {
+  opacity: 0.6;
+
+  cursor: not-allowed;
+}
+
+.login-erro {
+  padding: 10px;
+
+  border-radius: 6px;
+
+  background: #fee2e2;
+  color: #b91c1c;
+
+  font-size: 14px;
+}
+
+.login-divisor {
+  display: flex;
+  align-items: center;
+
+  gap: 12px;
+
+  margin: 20px 0;
+}
+
+.login-divisor span {
+  flex: 1;
+
+  height: 1px;
+
+  background: #cbd5e1;
+}
+
+.login-divisor p {
+  margin: 0;
+
+  color: #64748b;
+}
+
+.login-cadastro {
+  width: 100%;
+
+  padding: 12px;
+
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+
+  background: white;
+
+  cursor: pointer;
+}
+
+.login-cadastro:hover {
+  background: #f1f5f9;
+}

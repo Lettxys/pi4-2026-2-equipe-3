@@ -1,6 +1,166 @@
-@System.Api_HostAddress = http://localhost:3000
+@host = http://localhost:3000
+@email = joana.dasilva@example.com
+@senha = Senha@123
+@novaSenha = NovaSenha@123
+@token = {{login.response.body.accessToken}}
+@userId = {{login.response.body.userId}}
+@outroToken = {{login2.response.body.accessToken}}
+@outroUserId = {{login2.response.body.userId}}
+@resetToken = cole-aqui-o-token-mostrado-no-log
 
-GET {{System.Api_HostAddress}}/weatherforecast/
+### 1. Cadastro de usuário -> 201 Created
+# Os CPFs 11144477735 e 52998224725 são válidos (dígitos verificadores conferem).
+POST {{host}}/api/auth/register
+Content-Type: application/json
+
+{
+  "fullName": "Joana da Silva",
+  "cpf": "11144477735",
+  "email": "joana.dasilva@example.com",
+  "phone": "11987654321",
+  "password": "Senha@123"
+}
+
+### 1.1. Cadastro duplicado -> 409 CONFLICT
+POST {{host}}/api/auth/register
+Content-Type: application/json
+
+{
+  "fullName": "Joana da Silva",
+  "cpf": "11144477735",
+  "email": "joana.dasilva@example.com",
+  "phone": "11987654321",
+  "password": "Senha@123"
+}
+
+### 1.2. Cadastro com CPF inválido -> 400 VALIDATION_ERROR
+POST {{host}}/api/auth/register
+Content-Type: application/json
+
+{
+  "fullName": "Joana da Silva",
+  "cpf": "12345678900",
+  "email": "joana.outra@example.com",
+  "phone": "11987654321",
+  "password": "Senha@123"
+}
+
+### 1.3. Cadastro de segundo usuário -> 201 Created
+POST {{host}}/api/auth/register
+Content-Type: application/json
+
+{
+  "fullName": "Carlos Eduardo Souza",
+  "cpf": "52998224725",
+  "email": "carlos.souza@example.com",
+  "phone": "11976543210",
+  "password": "Senha@123"
+}
+
+### 2. Login -> 200 OK
+# @name login
+POST {{host}}/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "joana.dasilva@example.com",
+  "password": "Senha@123"
+}
+
+### 2.1. Login do segundo usuário -> 200 OK
+# @name login2
+POST {{host}}/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "carlos.souza@example.com",
+  "password": "Senha@123"
+}
+
+### 2.2. Login com senha errada -> 401 UNAUTHORIZED
+POST {{host}}/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "joana.dasilva@example.com",
+  "password": "SenhaErrada@123"
+}
+
+### 3. Perfil do usuário autenticado -> 200 OK
+GET {{host}}/api/auth/me
+Authorization: Bearer {{token}}
 Accept: application/json
 
-###
+### 3.1. Perfil sem token -> 401 UNAUTHORIZED
+GET {{host}}/api/auth/me
+Accept: application/json
+
+### 4. Solicitar redefinição de senha -> 200 OK
+# Sempre 200, exista o e-mail ou não.
+# Sem SMTP_HOST configurado o link aparece no log da API (nível Warning).
+POST {{host}}/api/auth/forgot-password
+Content-Type: application/json
+
+{
+  "email": "joana.dasilva@example.com"
+}
+
+### 5. Redefinir senha com token -> 200 OK
+POST {{host}}/api/auth/reset-password
+Content-Type: application/json
+
+{
+  "token": "{{resetToken}}",
+  "newPassword": "NovaSenha@123"
+}
+
+### 5.1. Redefinir senha com token inválido -> 400 VALIDATION_ERROR
+POST {{host}}/api/auth/reset-password
+Content-Type: application/json
+
+{
+  "token": "token-que-nao-existe",
+  "newPassword": "NovaSenha@123"
+}
+
+### 6. Alterar senha -> 200 OK
+# Invalida o token atual: ao final é preciso fazer login novamente.
+PATCH {{host}}/api/auth/change-password
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "currentPassword": "Senha@123",
+  "newPassword": "NovaSenha@123"
+}
+
+### 6.1. Alterar senha com a senha atual errada -> 400 VALIDATION_ERROR
+PATCH {{host}}/api/auth/change-password
+Authorization: Bearer {{outroToken}}
+Content-Type: application/json
+
+{
+  "currentPassword": "SenhaErrada@123",
+  "newPassword": "OutraSenha@123"
+}
+
+### 7. Encerrar sessão -> 200 OK
+POST {{host}}/api/auth/logout
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+### 7.1. Reutilizar o token encerrado -> 401 UNAUTHORIZED
+GET {{host}}/api/auth/me
+Authorization: Bearer {{token}}
+Accept: application/json
+
+### 8. Deletar própria conta -> 204 No Content
+DELETE {{host}}/api/users/{{userId}}
+Authorization: Bearer {{outroToken}}
+
+### 8.1. Deletar conta de terceiro -> 403 FORBIDDEN
+DELETE {{host}}/api/users/{{outroUserId}}
+Authorization: Bearer {{token}}
+
+### 8.2. Deletar conta sem token -> 401 UNAUTHORIZED
+DELETE {{host}}/api/users/{{userId}}

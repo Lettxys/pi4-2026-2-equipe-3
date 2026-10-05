@@ -118,7 +118,7 @@ INSERT INTO usuario (id, nome_completo, cpf, email, telefone, data_nascimento, p
 (20, 'Marina Souza Batista', '95671198054', 'marina_batista@example.com', '88901516684', '1998-06-04', 'USER', '63700000', 'Alameda Costa', '775', NULL, 'Centro', 'Crateús', 'CE', now() - interval '3 days', now() - interval '3 days');
 
 -- senha de todos os usuários: Senha@123
-UPDATE usuario SET senha_hash = 'AQAAAAIAAYagAAAAEDS9PCXaPjsyUKM8SxkVc/Hn0XdHEAml4cWmLlxXm6TF7kXI1YsTYGdTUWN8CNaWcg==';
+UPDATE usuario SET senha_hash = 'pbkdf2-sha256$210000$AAECAwQFBgcICQoLDA0ODw==$5t1ctYzqZT8xp64e41SGx4vQfpMb8Iu5AUcgQ4CXuGM=';
 
 INSERT INTO token_redefinicao_senha (usuario_id, token_hash, expira_em, criado_em)
 SELECT id, encode(sha256(gen_random_uuid()::text::bytea), 'hex'), now() + interval '30 minutes', now()

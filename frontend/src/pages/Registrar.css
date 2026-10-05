@@ -6,7 +6,7 @@
   align-items: center;
   justify-content: center;
 
-  background: rgba(0, 0, 0, 0.6);
+  background: rgba(27, 54, 93, 0.55);
 
   z-index: 1000;
 }
@@ -20,11 +20,11 @@
   padding: 32px;
 
   background: white;
-  color: #0f172a;
+  color: #1b365d;
 
   border-radius: 16px;
 
-  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.4);
+  box-shadow: 0 20px 50px rgba(27, 54, 93, 0.35);
 }
 
 .registrar-fechar {
@@ -36,11 +36,15 @@
   border: none;
   background: transparent;
 
-  color: #64748b;
+  color: #6b7f99;
 
   font-size: 28px;
 
   cursor: pointer;
+}
+
+.registrar-fechar:hover {
+  color: #1a9e94;
 }
 
 .registrar-modal h2 {
@@ -55,7 +59,7 @@
 
   margin-bottom: 24px;
 
-  background: #cbd5e1;
+  background: #1a9e94;
 
   border-radius: 4px;
 }
@@ -84,14 +88,17 @@
 
   padding: 11px;
 
-  border: 1px solid #cbd5e1;
+  border: 1px solid #d5e8e3;
   border-radius: 7px;
 
   outline: none;
+
+  transition: border-color 0.2s, box-shadow 0.2s;
 }
 
 .registrar-campo input:focus {
-  border-color: #06b6d4;
+  border-color: #1a9e94;
+  box-shadow: 0 0 0 3px rgba(26, 158, 148, 0.2);
 }
 
 .registrar-botao {
@@ -102,16 +109,18 @@
   border: none;
   border-radius: 8px;
 
-  background: #06b6d4;
-  color: #020617;
+  background: #1a9e94;
+  color: white;
 
   font-weight: 600;
 
   cursor: pointer;
+
+  transition: background 0.2s;
 }
 
 .registrar-botao:hover {
-  background: #0891b2;
+  background: #158a81;
 }
 
 .registrar-botao:disabled {
@@ -150,7 +159,7 @@
 
   margin-top: 18px;
 
-  color: #475569;
+  color: #2f4f7f;
 
   font-size: 14px;
 }
@@ -159,9 +168,13 @@
   border: none;
   background: transparent;
 
-  color: #0891b2;
+  color: #1a9e94;
 
   font-weight: 600;
 
   cursor: pointer;
+}
+
+.registrar-login button:hover {
+  color: #158a81;
 }

@@ -1,41 +1,60 @@
 import { useState } from 'react';
 
 import Landing from './pages/Landing';
+import Calculadora from './pages/Calculadora';
+import Quiz from './pages/Quiz';
 import Login from './pages/Login';
 import Registrar from './pages/Registrar';
 
-type Tela =
-  | 'landing'
-  | 'login'
-  | 'registrar';
+type Pagina = 'landing' | 'calculadora' | 'quiz';
+type Modal = 'login' | 'registrar' | null;
 
 function App() {
+  const [pagina, setPagina] = useState<Pagina>('landing');
+  const [modal, setModal] = useState<Modal>(null);
 
-  const [tela, setTela] =
-    useState<Tela>('landing');
+  function irPara(destino: Pagina) {
+    setPagina(destino);
+    window.scrollTo({ top: 0 });
+  }
 
   return (
     <>
-      <Landing
-        abrirLogin={() => setTela('login')}
-        abrirRegistrar={() => setTela('registrar')}
-      />
-
-      {tela === 'login' && (
-        <Login
-          fechar={() => setTela('landing')}
-          abrirRegistrar={() =>
-            setTela('registrar')
-          }
+      {pagina === 'landing' && (
+        <Landing
+          abrirLogin={() => setModal('login')}
+          abrirRegistrar={() => setModal('registrar')}
+          abrirCalculadora={() => irPara('calculadora')}
+          abrirQuiz={() => irPara('quiz')}
         />
       )}
 
-      {tela === 'registrar' && (
+      {pagina === 'calculadora' && (
+        <Calculadora
+          voltarInicio={() => irPara('landing')}
+          abrirLogin={() => setModal('login')}
+          abrirQuiz={() => irPara('quiz')}
+        />
+      )}
+
+      {pagina === 'quiz' && (
+        <Quiz
+          voltarInicio={() => irPara('landing')}
+          abrirLogin={() => setModal('login')}
+        />
+      )}
+
+      {modal === 'login' && (
+        <Login
+          fechar={() => setModal(null)}
+          abrirRegistrar={() => setModal('registrar')}
+        />
+      )}
+
+      {modal === 'registrar' && (
         <Registrar
-          fechar={() => setTela('landing')}
-          abrirLogin={() =>
-            setTela('login')
-          }
+          fechar={() => setModal(null)}
+          abrirLogin={() => setModal('login')}
         />
       )}
     </>

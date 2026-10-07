@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import type { FormEvent } from 'react';
+import { isAxiosError } from 'axios';
 
 import './Registrar.css';
 import { registrarUsuario } from '../services/api';
@@ -9,12 +10,50 @@ interface RegistrarProps {
   abrirLogin: () => void;
 }
 
+// Monta a mensagem de erro a partir da resposta do backend:
+// { status, code, message, details: [...] }
+function extrairMensagemDeErro(error: unknown): string {
+  if (isAxiosError(error)) {
+    const dados = error.response?.data as
+      | { message?: string; details?: unknown[] }
+      | undefined;
+
+    if (!dados) {
+      return 'Não foi possível conectar ao servidor.';
+    }
+
+    // Cada item de "details" pode ser um texto ou um objeto com "message"
+    const detalhes = (dados.details ?? [])
+      .map((item) => {
+        if (typeof item === 'string') {
+          return item;
+        }
+
+        if (item && typeof item === 'object' && 'message' in item) {
+          return String((item as { message: unknown }).message);
+        }
+
+        return '';
+      })
+      .filter(Boolean);
+
+    if (detalhes.length > 0) {
+      return detalhes.join(' ');
+    }
+
+    return dados.message ?? 'Não foi possível realizar o cadastro.';
+  }
+
+  return 'Não foi possível realizar o cadastro.';
+}
+
 export default function Registrar({
   fechar,
   abrirLogin
 }: RegistrarProps) {
   const [nome, setNome] = useState('');
-  const [cpfTelefone, setCpfTelefone] = useState('');
+  const [cpf, setCpf] = useState('');
+  const [telefone, setTelefone] = useState('');
   const [email, setEmail] = useState('');
   const [senha, setSenha] = useState('');
   const [confirmarSenha, setConfirmarSenha] = useState('');
@@ -40,25 +79,24 @@ export default function Registrar({
 
     try {
       await registrarUsuario({
-        nome,
-        cpfTelefone,
-        email,
-        senha
+        fullName: nome.trim(),
+        cpf: cpf.replace(/\D/g, ''),
+        email: email.trim(),
+        // Telefone é opcional: vazio não é enviado
+        phone: telefone.trim() || undefined,
+        password: senha
       });
 
       setSucesso('Cadastro realizado com sucesso.');
 
       setNome('');
-      setCpfTelefone('');
+      setCpf('');
+      setTelefone('');
       setEmail('');
       setSenha('');
       setConfirmarSenha('');
     } catch (error) {
-      if (error instanceof Error) {
-        setErro(error.message);
-      } else {
-        setErro('Não foi possível realizar o cadastro.');
-      }
+      setErro(extrairMensagemDeErro(error));
     } finally {
       setCarregando(false);
     }
@@ -94,19 +132,38 @@ export default function Registrar({
               }
               placeholder="Como no documento"
               disabled={carregando}
+              required
             />
           </div>
 
           <div className="registrar-campo">
-            <label>CPF | Telefone</label>
+            <label>CPF</label>
 
             <input
               type="text"
-              value={cpfTelefone}
+              inputMode="numeric"
+              value={cpf}
               onChange={(event) =>
-                setCpfTelefone(event.target.value)
+                setCpf(event.target.value)
               }
               placeholder="000.000.000-00"
+              maxLength={14}
+              disabled={carregando}
+              required
+            />
+          </div>
+
+          <div className="registrar-campo">
+            <label>Telefone (opcional)</label>
+
+            <input
+              type="tel"
+              value={telefone}
+              onChange={(event) =>
+                setTelefone(event.target.value)
+              }
+              placeholder="(00) 00000-0000"
+              maxLength={20}
               disabled={carregando}
             />
           </div>
@@ -122,6 +179,7 @@ export default function Registrar({
               }
               placeholder="seu@email.com"
               disabled={carregando}
+              required
             />
           </div>
 
@@ -135,7 +193,9 @@ export default function Registrar({
                 setSenha(event.target.value)
               }
               placeholder="Mín. 8, números e maiúscula"
+              minLength={8}
               disabled={carregando}
+              required
             />
           </div>
 
@@ -150,6 +210,7 @@ export default function Registrar({
               }
               placeholder="Repita a senha"
               disabled={carregando}
+              required
             />
           </div>
 

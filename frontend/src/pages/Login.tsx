@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import type { FormEvent } from 'react';
+import { isAxiosError } from 'axios';
 
 import './Login.css';
 import { fazerLogin } from '../services/api';
@@ -9,11 +10,48 @@ interface LoginProps {
   abrirRegistrar: () => void;
 }
 
+// Monta a mensagem de erro a partir da resposta do backend:
+// { status, code, message, details: [...] }
+function extrairMensagemDeErro(error: unknown): string {
+  if (isAxiosError(error)) {
+    const dados = error.response?.data as
+      | { message?: string; details?: unknown[] }
+      | undefined;
+
+    if (!dados) {
+      return 'Não foi possível conectar ao servidor.';
+    }
+
+    // Cada item de "details" pode ser um texto ou um objeto com "message"
+    const detalhes = (dados.details ?? [])
+      .map((item) => {
+        if (typeof item === 'string') {
+          return item;
+        }
+
+        if (item && typeof item === 'object' && 'message' in item) {
+          return String((item as { message: unknown }).message);
+        }
+
+        return '';
+      })
+      .filter(Boolean);
+
+    if (detalhes.length > 0) {
+      return detalhes.join(' ');
+    }
+
+    return dados.message ?? 'Não foi possível realizar o login.';
+  }
+
+  return 'Não foi possível realizar o login.';
+}
+
 export default function Login({
   fechar,
   abrirRegistrar
 }: LoginProps) {
-  const [emailCpf, setEmailCpf] = useState('');
+  const [email, setEmail] = useState('');
   const [senha, setSenha] = useState('');
 
   const [carregando, setCarregando] = useState(false);
@@ -28,22 +66,15 @@ export default function Login({
     setCarregando(true);
 
     try {
-      const dados = await fazerLogin({
-        emailCpf,
-        senha
+      // O token já é salvo dentro de fazerLogin (api.ts)
+      await fazerLogin({
+        email: email.trim(),
+        password: senha
       });
-
-      console.log('Login realizado:', dados);
 
       fechar();
     } catch (error) {
-      if (error instanceof Error) {
-        setErro(error.message);
-      } else {
-        setErro(
-          'Não foi possível realizar o login.'
-        );
-      }
+      setErro(extrairMensagemDeErro(error));
     } finally {
       setCarregando(false);
     }
@@ -71,16 +102,17 @@ export default function Login({
         >
 
           <div className="login-campo">
-            <label>E-mail ou CPF</label>
+            <label>E-mail</label>
 
             <input
-              type="text"
-              value={emailCpf}
+              type="email"
+              value={email}
               onChange={(event) =>
-                setEmailCpf(event.target.value)
+                setEmail(event.target.value)
               }
               placeholder="seu@email.com"
               disabled={carregando}
+              required
             />
           </div>
 
@@ -95,6 +127,7 @@ export default function Login({
               }
               placeholder="••••••"
               disabled={carregando}
+              required
             />
           </div>
 

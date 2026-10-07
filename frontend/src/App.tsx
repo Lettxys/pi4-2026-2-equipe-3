@@ -1,27 +1,64 @@
 import { useState } from 'react';
 
-import Menu from './components/Menu';
+import Landing from './pages/Landing';
+import Calculadora from './pages/Calculadora';
+import Quiz from './pages/Quiz';
+import Login from './pages/Login';
+import Registrar from './pages/Registrar';
 
-import Tela1 from './pages/Tela1';
-import Tela2 from './pages/Tela2';
-import Tela3 from './pages/Tela3';
-import Tela4 from './pages/Tela4';
-import Tela5 from './pages/Tela5';
+type Pagina = 'landing' | 'calculadora' | 'quiz';
+type Modal = 'login' | 'registrar' | null;
 
-export default function App() {
-  const [tela, setTela] = useState(1);
+function App() {
+  const [pagina, setPagina] = useState<Pagina>('landing');
+  const [modal, setModal] = useState<Modal>(null);
+
+  function irPara(destino: Pagina) {
+    setPagina(destino);
+    window.scrollTo({ top: 0 });
+  }
 
   return (
-    <div className="min-h-screen bg-slate-900 text-white flex flex-col">
-      <Menu mudarTela={setTela} />
+    <>
+      {pagina === 'landing' && (
+        <Landing
+          abrirLogin={() => setModal('login')}
+          abrirRegistrar={() => setModal('registrar')}
+          abrirCalculadora={() => irPara('calculadora')}
+          abrirQuiz={() => irPara('quiz')}
+        />
+      )}
 
-      <main className="flex-1 flex items-center justify-center p-4">
-        {tela === 1 && <Tela1 />}
-        {tela === 2 && <Tela2 />}
-        {tela === 3 && <Tela3 />}
-        {tela === 4 && <Tela4 />}
-        {tela === 5 && <Tela5 />}
-      </main>
-    </div>
+      {pagina === 'calculadora' && (
+        <Calculadora
+          voltarInicio={() => irPara('landing')}
+          abrirLogin={() => setModal('login')}
+          abrirQuiz={() => irPara('quiz')}
+        />
+      )}
+
+      {pagina === 'quiz' && (
+        <Quiz
+          voltarInicio={() => irPara('landing')}
+          abrirLogin={() => setModal('login')}
+        />
+      )}
+
+      {modal === 'login' && (
+        <Login
+          fechar={() => setModal(null)}
+          abrirRegistrar={() => setModal('registrar')}
+        />
+      )}
+
+      {modal === 'registrar' && (
+        <Registrar
+          fechar={() => setModal(null)}
+          abrirLogin={() => setModal('login')}
+        />
+      )}
+    </>
   );
 }
+
+export default App;

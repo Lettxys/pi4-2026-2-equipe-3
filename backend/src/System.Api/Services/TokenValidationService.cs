@@ -1,13 +1,13 @@
 using System.Globalization;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
-using Microsoft.EntityFrameworkCore;
-using System.Api.Data;
 using System.Api.Interfaces;
 
 namespace System.Api.Services;
 
-public sealed class TokenValidationService(AppDbContext db) : ITokenValidator
+public sealed class TokenValidationService(
+    IUsuarioRepository usuarios,
+    ITokenRevogadoRepository tokensRevogados) : ITokenValidator
 {
     public async Task<bool> ValidateAsync(ClaimsPrincipal principal, CancellationToken cancellationToken)
     {
@@ -17,9 +17,7 @@ public sealed class TokenValidationService(AppDbContext db) : ITokenValidator
             return false;
         }
 
-        var user = await db.Usuarios
-            .AsNoTracking()
-            .FirstOrDefaultAsync(u => u.Id == id, cancellationToken);
+        var user = await usuarios.GetByIdAsync(id, cancellationToken);
 
         if (user is null || user.AnonimizadoEm is not null || string.IsNullOrEmpty(user.SenhaHash))
         {
@@ -28,6 +26,6 @@ public sealed class TokenValidationService(AppDbContext db) : ITokenValidator
 
         var jti = principal.FindFirst(JwtRegisteredClaimNames.Jti)?.Value;
         return jti is null
-            || !await db.TokensRevogados.AnyAsync(t => t.Jti == jti, cancellationToken);
+            || !await tokensRevogados.ExistsAsync(jti, cancellationToken);
     }
 }

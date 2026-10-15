@@ -5,17 +5,36 @@ import Calculadora from './pages/Calculadora';
 import Quiz from './pages/Quiz';
 import Login from './pages/Login';
 import Registrar from './pages/Registrar';
+import ForgotPassword from './pages/ForgotPassword';
+import ResetPassword from './pages/ResetPassword';
 
 type Pagina = 'landing' | 'calculadora' | 'quiz';
-type Modal = 'login' | 'registrar' | null;
+
+type Modal = | 'login' | 'registrar' | 'ForgotPassword' | 'ResetPassword' | null;
 
 function App() {
   const [pagina, setPagina] = useState<Pagina>('landing');
   const [modal, setModal] = useState<Modal>(null);
+  const [tokenRedefinicao, setTokenRedefinicao] = useState('');
 
   function irPara(destino: Pagina) {
     setPagina(destino);
     window.scrollTo({ top: 0 });
+  }
+
+  function abrirRedefinicaoSenha(token: string) {
+    setTokenRedefinicao(token);
+    setModal('ResetPassword');
+  }
+
+  function voltarLogin() {
+    setTokenRedefinicao('');
+    setModal('login');
+  }
+
+  function fecharModal() {
+    setTokenRedefinicao('');
+    setModal(null);
   }
 
   return (
@@ -46,14 +65,30 @@ function App() {
 
       {modal === 'login' && (
         <Login
-          fechar={() => setModal(null)}
+          fechar={fecharModal}
           abrirRegistrar={() => setModal('registrar')}
+          abrirForgotPassword={() => setModal('ForgotPassword')}
+        />
+      )}
+
+      {modal === 'ForgotPassword' && (
+        <ForgotPassword
+          onVoltar={() => setModal('login')}
+          onFechar={fecharModal}
+        />
+      )}
+
+      {modal === 'ResetPassword' && (
+        <ResetPassword
+          token={tokenRedefinicao}
+          fechar={fecharModal}
+          voltarLogin={voltarLogin}
         />
       )}
 
       {modal === 'registrar' && (
         <Registrar
-          fechar={() => setModal(null)}
+          fechar={fecharModal}
           abrirLogin={() => setModal('login')}
         />
       )}

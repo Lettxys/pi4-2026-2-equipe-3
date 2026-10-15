@@ -47,6 +47,7 @@ builder.Services.AddScoped<ITokenValidator, TokenValidationService>();
 builder.Services.AddScoped<IEmailSender, EmailSender>();
 builder.Services.AddScoped<IStorage, Storage>();
 builder.Services.AddScoped<IAuthService, AuthService>();
+builder.Services.AddScoped<IProcessService, ProcessService>();
 
 builder.Services.AddScoped<IAuthorizationHandler, SelfOrAdminHandler>();
 

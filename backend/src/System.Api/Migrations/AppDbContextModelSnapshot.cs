@@ -80,6 +80,9 @@ namespace System.Api.Migrations
                     b.HasKey("Id")
                         .HasName("pk_condutor_autorizado");
 
+                    b.HasAlternateKey("Id", "ProcessoId")
+                        .HasName("ak_condutor_autorizado_id_processo_id");
+
                     b.HasIndex("UsuarioId")
                         .HasDatabaseName("ix_condutor_autorizado_usuario_id");
 
@@ -163,14 +166,14 @@ namespace System.Api.Migrations
                     b.HasKey("Id")
                         .HasName("pk_documento");
 
-                    b.HasIndex("CondutorAutorizadoId")
-                        .HasDatabaseName("ix_documento_condutor_autorizado_id");
-
                     b.HasIndex("ProcessoId")
                         .HasDatabaseName("ix_documento_processo_id");
 
                     b.HasIndex("TipoDocumentoId")
                         .HasDatabaseName("ix_documento_tipo_documento_id");
+
+                    b.HasIndex("CondutorAutorizadoId", "ProcessoId")
+                        .HasDatabaseName("ix_documento_condutor_autorizado_id_processo_id");
 
                     b.ToTable("documento", null, t =>
                         {
@@ -795,12 +798,6 @@ namespace System.Api.Migrations
 
             modelBuilder.Entity("System.Api.Models.Documento", b =>
                 {
-                    b.HasOne("System.Api.Models.CondutorAutorizado", "CondutorAutorizado")
-                        .WithMany("Documentos")
-                        .HasForeignKey("CondutorAutorizadoId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .HasConstraintName("fk_documento_condutor_autorizado_condutor_autorizado_id");
-
                     b.HasOne("System.Api.Models.Processo", "Processo")
                         .WithMany("Documentos")
                         .HasForeignKey("ProcessoId")
@@ -814,6 +811,13 @@ namespace System.Api.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired()
                         .HasConstraintName("fk_documento_tipo_documento_tipo_documento_id");
+
+                    b.HasOne("System.Api.Models.CondutorAutorizado", "CondutorAutorizado")
+                        .WithMany("Documentos")
+                        .HasForeignKey("CondutorAutorizadoId", "ProcessoId")
+                        .HasPrincipalKey("Id", "ProcessoId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .HasConstraintName("fk_documento_condutor_autorizado");
 
                     b.Navigation("CondutorAutorizado");
 

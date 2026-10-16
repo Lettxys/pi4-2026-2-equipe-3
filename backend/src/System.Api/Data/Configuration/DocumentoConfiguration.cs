@@ -28,7 +28,9 @@ public class DocumentoConfiguration : IEntityTypeConfiguration<Documento>
 
         builder.HasOne(d => d.CondutorAutorizado)
             .WithMany(c => c.Documentos)
-            .HasForeignKey(d => d.CondutorAutorizadoId)
+            .HasForeignKey(d => new { d.CondutorAutorizadoId, d.ProcessoId })
+            .HasPrincipalKey(c => new { c.Id, c.ProcessoId })
+            .HasConstraintName("fk_documento_condutor_autorizado")
             .OnDelete(DeleteBehavior.Cascade);
 
         builder.HasOne(d => d.TipoDocumento)

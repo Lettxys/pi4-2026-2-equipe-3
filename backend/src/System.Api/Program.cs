@@ -15,6 +15,7 @@ using System.Api.Data;
 using System.Api.DTO.Common;
 using System.Api.Interfaces;
 using System.Api.Middlewares;
+using System.Api.Repositories;
 using System.Api.Security;
 using System.Api.Services;
 
@@ -46,6 +47,13 @@ builder.Services.AddStackExchangeRedisCache(options =>
     options.InstanceName = "pi4:";
 });
 
+builder.Services.AddScoped<IUsuarioRepository, UsuarioRepository>();
+builder.Services.AddScoped<ITokenRedefinicaoSenhaRepository, TokenRedefinicaoSenhaRepository>();
+builder.Services.AddScoped<ITokenRevogadoRepository, TokenRevogadoRepository>();
+builder.Services.AddScoped<IProcessoRepository, ProcessoRepository>();
+builder.Services.AddScoped<IDocumentoRepository, DocumentoRepository>();
+builder.Services.AddScoped<IDossieRepository, DossieRepository>();
+builder.Services.AddScoped<ICondutorAutorizadoRepository, CondutorAutorizadoRepository>();
 builder.Services.AddScoped<IPasswordHasher, PasswordHasher>();
 builder.Services.AddScoped<ITokenService, TokenService>();
 builder.Services.AddScoped<IRefreshTokenStore, RefreshTokenStore>();

@@ -1,5 +1,7 @@
 using System.Text.Json;
 using Microsoft.AspNetCore.Diagnostics;
+using Microsoft.EntityFrameworkCore;
+using Npgsql;
 using System.Api.DTO.Common;
 
 namespace System.Api.Middlewares;
@@ -37,6 +39,14 @@ public sealed class ExceptionHandlingMiddleware(
             logger.LogInformation(exception, "Requisição rejeitada em {Route}", context.Request.Path);
             await WriteAsync(context, exception.StatusCode, code, message, []);
         }
+        catch (DbUpdateException exception) when (exception.InnerException is PostgresException postgres)
+        {
+            await WriteDatabaseErrorAsync(context, postgres);
+        }
+        catch (PostgresException exception)
+        {
+            await WriteDatabaseErrorAsync(context, exception);
+        }
         catch (Exception exception)
         {
             logger.LogError(exception, "Falha não tratada em {Method} {Route}", context.Request.Method, context.Request.Path);
@@ -47,6 +57,36 @@ public sealed class ExceptionHandlingMiddleware(
                 "Erro interno inesperado.",
                 []);
         }
+    }
+
+    private Task WriteDatabaseErrorAsync(HttpContext context, PostgresException exception)
+    {
+        var (status, code, message) = exception.SqlState switch
+        {
+            PostgresErrorCodes.UniqueViolation =>
+                (StatusCodes.Status409Conflict, ErrorCodes.Conflict, "Registro duplicado."),
+            PostgresErrorCodes.ForeignKeyViolation =>
+                (StatusCodes.Status409Conflict, ErrorCodes.Conflict, "Registro relacionado não encontrado ou em uso."),
+            PostgresErrorCodes.CheckViolation or PostgresErrorCodes.NotNullViolation or PostgresErrorCodes.StringDataRightTruncation =>
+                (StatusCodes.Status400BadRequest, ErrorCodes.Validation, "Dado inválido."),
+            _ => (StatusCodes.Status500InternalServerError, ErrorCodes.InternalError, "Erro interno inesperado."),
+        };
+
+        if (status == StatusCodes.Status500InternalServerError)
+        {
+            logger.LogError(exception, "Falha no banco em {Method} {Route}", context.Request.Method, context.Request.Path);
+        }
+        else
+        {
+            logger.LogWarning(
+                "O banco recusou a operação em {Method} {Route}: {SqlState} na restrição {Constraint}",
+                context.Request.Method,
+                context.Request.Path,
+                exception.SqlState,
+                exception.ConstraintName);
+        }
+
+        return WriteAsync(context, status, code, message, []);
     }
 
     private static Task WriteAsync(

@@ -6,7 +6,6 @@ using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Options;
 using Npgsql;
 using System.Api.Configuration;
-using System.Api.Data;
 using System.Api.DTO.Auth;
 using System.Api.DTO.Common;
 using System.Api.Interfaces;
@@ -16,7 +15,13 @@ using System.Api.Security;
 namespace System.Api.Services;
 
 public sealed class AuthService(
-    AppDbContext db,
+    IUsuarioRepository usuarios,
+    ITokenRedefinicaoSenhaRepository tokensRedefinicaoSenha,
+    ITokenRevogadoRepository tokensRevogados,
+    IProcessoRepository processos,
+    IDocumentoRepository documentos,
+    IDossieRepository dossies,
+    ICondutorAutorizadoRepository condutores,
     IPasswordHasher passwordHasher,
     ITokenService tokenService,
     IRefreshTokenStore refreshTokenStore,
@@ -44,12 +49,12 @@ public sealed class AuthService(
         var email = request.Email.Trim().ToLowerInvariant();
         var cpf = NormalizeCpf(request.Cpf);
 
-        if (await db.Usuarios.AnyAsync(u => u.Email == email, cancellationToken))
+        if (await usuarios.EmailExistsAsync(email, cancellationToken))
         {
             throw AppException.Conflict("Já existe uma conta cadastrada com este e-mail.");
         }
 
-        if (await db.Usuarios.AnyAsync(u => u.Cpf == cpf, cancellationToken))
+        if (await usuarios.CpfExistsAsync(cpf, cancellationToken))
         {
             throw AppException.Conflict("Já existe uma conta cadastrada com este CPF.");
         }
@@ -67,11 +72,11 @@ public sealed class AuthService(
             AtualizadoEm = now,
         };
 
-        db.Usuarios.Add(user);
+        usuarios.Add(user);
 
         try
         {
-            await db.SaveChangesAsync(cancellationToken);
+            await usuarios.SaveChangesAsync(cancellationToken);
         }
         catch (DbUpdateException exception) when (exception.InnerException is PostgresException { SqlState: "23505" })
         {
@@ -84,7 +89,7 @@ public sealed class AuthService(
     public async Task<AuthSession> LoginAsync(LoginRequest request, CancellationToken cancellationToken)
     {
         var email = request.Email.Trim().ToLowerInvariant();
-        var user = await db.Usuarios.FirstOrDefaultAsync(u => u.Email == email, cancellationToken);
+        var user = await usuarios.GetByEmailAsync(email, cancellationToken);
 
         if (user is null
             || string.IsNullOrEmpty(user.SenhaHash)
@@ -99,7 +104,7 @@ public sealed class AuthService(
         }
 
         var (token, _) = tokenService.Generate(user);
-        var process = await InProgressProcessAsync(user.Id, cancellationToken);
+        var process = await processos.GetInProgressAsync(user.Id, cancellationToken);
         var refreshToken = await IssueRefreshTokenAsync(user.Id, Guid.NewGuid().ToString("N"), cancellationToken);
 
         var response = new LoginResponse(
@@ -139,15 +144,18 @@ public sealed class AuthService(
             throw AppException.Unauthorized("Refresh token inválido ou expirado.");
         }
 
-        var user = await db.Usuarios
-            .FirstOrDefaultAsync(u => u.Id == claims.UserId && u.AnonimizadoEm == null, cancellationToken)
-            ?? throw AppException.Unauthorized("Refresh token inválido ou expirado.");
+        var user = await usuarios.GetByIdAsync(claims.UserId, cancellationToken);
+
+        if (user is null || user.AnonimizadoEm is not null)
+        {
+            throw AppException.Unauthorized("Refresh token inválido ou expirado.");
+        }
 
         await refreshTokenStore.ConsumeAsync(claims.Jti, RefreshTokenLifetime, cancellationToken);
         var newRefreshToken = await IssueRefreshTokenAsync(user.Id, claims.FamilyId, cancellationToken);
 
         var (token, _) = tokenService.Generate(user);
-        var process = await InProgressProcessAsync(user.Id, cancellationToken);
+        var process = await processos.GetInProgressAsync(user.Id, cancellationToken);
 
         var response = new LoginResponse(
             "Bearer",
@@ -175,9 +183,12 @@ public sealed class AuthService(
             throw AppException.Validation("Código inválido ou expirado.");
         }
 
-        var user = await db.Usuarios
-            .FirstOrDefaultAsync(u => u.Email == email && u.AnonimizadoEm == null, cancellationToken)
-            ?? throw AppException.Validation("Código inválido ou expirado.");
+        var user = await usuarios.GetByEmailAsync(email, cancellationToken);
+
+        if (user is null || user.AnonimizadoEm is not null)
+        {
+            throw AppException.Validation("Código inválido ou expirado.");
+        }
 
         await cache.RemoveAsync(VerificationCodeKeyPrefix + email, cancellationToken);
 
@@ -193,12 +204,10 @@ public sealed class AuthService(
 
     public async Task<MeResponse> MeAsync(long userId, CancellationToken cancellationToken)
     {
-        var user = await db.Usuarios
-            .AsNoTracking()
-            .FirstOrDefaultAsync(u => u.Id == userId, cancellationToken)
+        var user = await usuarios.GetByIdAsync(userId, cancellationToken)
             ?? throw AppException.NotFound("Usuário não encontrado.");
 
-        var process = await InProgressProcessAsync(userId, cancellationToken);
+        var process = await processos.GetInProgressAsync(userId, cancellationToken);
 
         return new MeResponse(
             user.Id,
@@ -225,10 +234,9 @@ public sealed class AuthService(
             new DistributedCacheEntryOptions { AbsoluteExpirationRelativeToNow = VerificationCodeRequestInterval },
             cancellationToken);
 
-        var user = await db.Usuarios
-            .FirstOrDefaultAsync(u => u.Email == email && u.AnonimizadoEm == null, cancellationToken);
+        var user = await usuarios.GetByEmailAsync(email, cancellationToken);
 
-        if (user is null || string.IsNullOrEmpty(user.SenhaHash))
+        if (user is null || user.AnonimizadoEm is not null || string.IsNullOrEmpty(user.SenhaHash))
         {
             return;
         }
@@ -261,21 +269,24 @@ public sealed class AuthService(
             throw AppException.Validation("Token de redefinição inválido ou expirado.");
         }
 
-        var user = await db.Usuarios
-            .FirstOrDefaultAsync(u => u.Id == userId && u.AnonimizadoEm == null, cancellationToken)
-            ?? throw AppException.Validation("Token de redefinição inválido ou expirado.");
+        var user = await usuarios.GetByIdAsync(userId, cancellationToken);
+
+        if (user is null || user.AnonimizadoEm is not null)
+        {
+            throw AppException.Validation("Token de redefinição inválido ou expirado.");
+        }
 
         await cache.RemoveAsync(tokenKey, cancellationToken);
 
         user.SenhaHash = passwordHasher.Hash(request.NewPassword);
         user.AtualizadoEm = DateTime.UtcNow;
 
-        await db.SaveChangesAsync(cancellationToken);
+        await usuarios.SaveChangesAsync(cancellationToken);
     }
 
     public async Task ChangePasswordAsync(long userId, ChangePasswordRequest request, CancellationToken cancellationToken)
     {
-        var user = await db.Usuarios.FirstOrDefaultAsync(u => u.Id == userId, cancellationToken)
+        var user = await usuarios.GetByIdAsync(userId, cancellationToken)
             ?? throw AppException.NotFound("Usuário não encontrado.");
 
         if (string.IsNullOrEmpty(user.SenhaHash)
@@ -288,7 +299,7 @@ public sealed class AuthService(
         user.SenhaHash = passwordHasher.Hash(request.NewPassword);
         user.AtualizadoEm = now;
 
-        await db.SaveChangesAsync(cancellationToken);
+        await usuarios.SaveChangesAsync(cancellationToken);
     }
 
     public async Task EndSessionAsync(
@@ -297,15 +308,14 @@ public sealed class AuthService(
         string? refreshToken,
         CancellationToken cancellationToken)
     {
-        await db.TokensRevogados
-            .Where(t => t.ExpiraEm < DateTime.UtcNow)
-            .ExecuteDeleteAsync(cancellationToken);
+        await tokensRevogados.RemoveExpiredAsync(DateTime.UtcNow, cancellationToken);
 
-        if (!await db.TokensRevogados.AnyAsync(t => t.Jti == jti, cancellationToken))
+        if (!await tokensRevogados.ExistsAsync(jti, cancellationToken))
         {
-            db.TokensRevogados.Add(new TokenRevogado { Jti = jti, ExpiraEm = expiresAt });
-            await db.SaveChangesAsync(cancellationToken);
+            tokensRevogados.Add(new TokenRevogado { Jti = jti, ExpiraEm = expiresAt });
         }
+
+        await tokensRevogados.SaveChangesAsync(cancellationToken);
 
         if (string.IsNullOrWhiteSpace(refreshToken))
         {
@@ -321,48 +331,26 @@ public sealed class AuthService(
 
     public async Task AnonymizeAccountAsync(long targetUserId, CancellationToken cancellationToken)
     {
-        var user = await db.Usuarios.FirstOrDefaultAsync(u => u.Id == targetUserId, cancellationToken)
+        var user = await usuarios.GetByIdAsync(targetUserId, cancellationToken)
             ?? throw AppException.NotFound("Usuário não encontrado.");
 
-        var processIds = await db.Processos
-            .Where(p => p.UsuarioId == user.Id)
-            .Select(p => p.Id)
-            .ToListAsync(cancellationToken);
+        var documents = await documentos.ListByUsuarioAsync(user.Id, cancellationToken);
+        var dossiers = await dossies.ListByUsuarioAsync(user.Id, cancellationToken);
 
-        var documentPaths = processIds.Count == 0
-            ? []
-            : await db.Documentos
-                .Where(d => processIds.Contains(d.ProcessoId))
-                .Select(d => new { d.CaminhoArquivo })
-                .ToListAsync(cancellationToken);
-
-        var dossierPaths = processIds.Count == 0
-            ? []
-            : await db.Dossies
-                .Where(d => processIds.Contains(d.ProcessoId))
-                .Select(d => new { d.CaminhoArquivo })
-                .ToListAsync(cancellationToken);
-
-        foreach (var document in documentPaths)
+        foreach (var document in documents)
         {
             storage.Delete(document.CaminhoArquivo);
         }
 
-        foreach (var dossier in dossierPaths)
+        foreach (var dossier in dossiers)
         {
             storage.Delete(dossier.CaminhoArquivo);
         }
 
-        if (processIds.Count > 0)
-        {
-            await db.Documentos.Where(d => processIds.Contains(d.ProcessoId)).ExecuteDeleteAsync(cancellationToken);
-            await db.CondutoresAutorizados.Where(c => processIds.Contains(c.ProcessoId)).ExecuteDeleteAsync(cancellationToken);
-            await db.Dossies.Where(d => processIds.Contains(d.ProcessoId)).ExecuteDeleteAsync(cancellationToken);
-        }
-
-        await db.TokensRedefinicaoSenha
-            .Where(t => t.UsuarioId == user.Id)
-            .ExecuteDeleteAsync(cancellationToken);
+        documentos.RemoveRange(documents);
+        dossies.RemoveRange(dossiers);
+        await condutores.RemoveByUsuarioAsync(user.Id, cancellationToken);
+        await tokensRedefinicaoSenha.RemoveAllAsync(user.Id, cancellationToken);
 
         var now = DateTime.UtcNow;
         user.NomeCompleto = "USUÁRIO ANONIMIZADO";
@@ -380,17 +368,10 @@ public sealed class AuthService(
         user.AnonimizadoEm = now;
         user.AtualizadoEm = now;
 
-        await db.SaveChangesAsync(cancellationToken);
+        await usuarios.SaveChangesAsync(cancellationToken);
 
         logger.LogInformation("Conta do usuário {UserId} anonimizada.", user.Id);
     }
-
-    private Task<Processo?> InProgressProcessAsync(long userId, CancellationToken cancellationToken) =>
-        db.Processos
-            .AsNoTracking()
-            .Where(p => p.UsuarioId == userId && p.Status != Models.Enums.StatusProcesso.COMPLETED)
-            .OrderByDescending(p => p.CriadoEm)
-            .FirstOrDefaultAsync(cancellationToken);
 
     private static string NormalizeCpf(string cpf) =>
         CpfAttribute.Value.TryNormalize(cpf, out var normalized)

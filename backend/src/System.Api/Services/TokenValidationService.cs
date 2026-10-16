@@ -4,6 +4,7 @@ using System.Security.Claims;
 using Microsoft.EntityFrameworkCore;
 using System.Api.Data;
 using System.Api.Interfaces;
+using System.Api.Security;
 
 namespace System.Api.Services;
 
@@ -11,6 +12,11 @@ public sealed class TokenValidationService(AppDbContext db) : ITokenValidator
 {
     public async Task<bool> ValidateAsync(ClaimsPrincipal principal, CancellationToken cancellationToken)
     {
+        if (principal.FindFirst(JwtClaimNames.TokenType)?.Value == JwtClaimNames.RefreshTokenType)
+        {
+            return false;
+        }
+
         var userId = principal.FindFirst(JwtRegisteredClaimNames.Sub)?.Value;
         if (!long.TryParse(userId, NumberStyles.Integer, CultureInfo.InvariantCulture, out var id))
         {

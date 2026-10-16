@@ -36,6 +36,7 @@ public static class ErrorCodes
     public const string Conflict = "CONFLICT";
     public const string PayloadTooLarge = "PAYLOAD_TOO_LARGE";
     public const string UnsupportedMediaType = "UNSUPPORTED_MEDIA_TYPE";
+    public const string TooManyRequests = "TOO_MANY_REQUESTS";
     public const string InternalError = "INTERNAL_ERROR";
 }
 
@@ -82,4 +83,7 @@ public sealed class AppException(
 
     public static AppException Conflict(string message) =>
         new(StatusCodes.Status409Conflict, ErrorCodes.Conflict, message);
+
+    public static AppException TooManyRequests(string message) =>
+        new(StatusCodes.Status429TooManyRequests, ErrorCodes.TooManyRequests, message);
 }

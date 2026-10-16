@@ -40,8 +40,15 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 
 builder.Services.AddHttpContextAccessor();
 
+builder.Services.AddStackExchangeRedisCache(options =>
+{
+    options.Configuration = appOptions.Redis.ConnectionString;
+    options.InstanceName = "pi4:";
+});
+
 builder.Services.AddScoped<IPasswordHasher, PasswordHasher>();
 builder.Services.AddScoped<ITokenService, TokenService>();
+builder.Services.AddScoped<IRefreshTokenStore, RefreshTokenStore>();
 builder.Services.AddScoped<ICurrentUser, CurrentUser>();
 builder.Services.AddScoped<ITokenValidator, TokenValidationService>();
 builder.Services.AddScoped<IEmailSender, EmailSender>();
@@ -95,7 +102,8 @@ builder.Services.AddCors(options =>
     options.AddDefaultPolicy(policy =>
         policy.WithOrigins(appOptions.Cors.AllowedOrigins.ToArray())
             .AllowAnyHeader()
-            .AllowAnyMethod()));
+            .AllowAnyMethod()
+            .AllowCredentials()));
 
 builder.Services.AddControllers()
     .AddJsonOptions(options => ApiJson.Apply(options.JsonSerializerOptions));

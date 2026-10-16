@@ -6,7 +6,8 @@
 @userId = {{login.response.body.userId}}
 @outroToken = {{login2.response.body.accessToken}}
 @outroUserId = {{login2.response.body.userId}}
-@resetToken = cole-aqui-o-token-mostrado-no-log
+@resetToken = {{verifyCode.response.body.resetToken}}
+@code = cole-aqui-o-codigo-recebido-por-email
 
 ### 1. Cadastro de usuário -> 201 Created
 # Os CPFs 11144477735 e 52998224725 são válidos (dígitos verificadores conferem).
@@ -95,14 +96,34 @@ Accept: application/json
 GET {{host}}/api/auth/me
 Accept: application/json
 
-### 4. Solicitar redefinição de senha -> 200 OK
+### 4. Solicitar código de redefinição -> 200 OK
 # Sempre 200, exista o e-mail ou não.
-# Sem SMTP_HOST configurado o link aparece no log da API (nível Warning).
+# Sem SMTP_HOST configurado o código aparece no log da API (nível Warning).
 POST {{host}}/api/auth/forgot-password
 Content-Type: application/json
 
 {
   "email": "joana.dasilva@example.com"
+}
+
+### 4.1. Verificar o código recebido por e-mail -> 200 OK
+# Devolve o token de uso único consumido pelo reset-password.
+# @name verifyCode
+POST {{host}}/api/auth/verify-code
+Content-Type: application/json
+
+{
+  "email": "joana.dasilva@example.com",
+  "code": "{{code}}"
+}
+
+### 4.2. Verificar com código inválido -> 400 VALIDATION_ERROR
+POST {{host}}/api/auth/verify-code
+Content-Type: application/json
+
+{
+  "email": "joana.dasilva@example.com",
+  "code": "ZZZZZZ"
 }
 
 ### 5. Redefinir senha com token -> 200 OK

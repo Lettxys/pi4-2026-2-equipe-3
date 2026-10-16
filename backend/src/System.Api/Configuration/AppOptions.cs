@@ -2,9 +2,16 @@ using System.Globalization;
 
 namespace System.Api.Configuration;
 
-public sealed record JwtOptions(string Secret, string Issuer, string Audience, int ExpiresInMinutes);
+public sealed record JwtOptions(
+    string Secret,
+    string Issuer,
+    string Audience,
+    int ExpiresInMinutes,
+    int RefreshExpiresInDays);
 
 public sealed record StorageOptions(string RootPath);
+
+public sealed record RedisOptions(string ConnectionString);
 
 public sealed record PasswordResetOptions(int TokenExpiresInMinutes);
 
@@ -24,6 +31,8 @@ public sealed class AppOptions
     public required JwtOptions Jwt { get; init; }
 
     public required StorageOptions Storage { get; init; }
+
+    public required RedisOptions Redis { get; init; }
 
     public required PasswordResetOptions PasswordReset { get; init; }
 
@@ -48,6 +57,18 @@ public sealed class AppOptions
             throw new InvalidOperationException("JWT_EXPIRES_IN_MINUTES precisa ser maior que zero.");
         }
 
+        var refreshExpiresInDays = ReadInt(configuration, 7, "REFRESH_TOKEN_EXPIRES_IN_DAYS", "Jwt:RefreshExpiresInDays");
+        if (refreshExpiresInDays <= 0)
+        {
+            throw new InvalidOperationException("REFRESH_TOKEN_EXPIRES_IN_DAYS precisa ser maior que zero.");
+        }
+
+        var redisConnection = Read(configuration, "REDIS_CONNECTION_STRING", "Redis:ConnectionString");
+        if (string.IsNullOrWhiteSpace(redisConnection))
+        {
+            redisConnection = "localhost:6379";
+        }
+
         var resetExpiresInMinutes = ReadInt(configuration, 30, "PASSWORD_RESET_TOKEN_EXPIRES_MINUTES");
         if (resetExpiresInMinutes <= 0)
         {
@@ -64,9 +85,11 @@ public sealed class AppOptions
                 secret,
                 Read(configuration, "JWT_ISSUER", "Jwt:Issuer", "pi4-equipe-3"),
                 Read(configuration, "JWT_AUDIENCE", "Jwt:Audience", "pi4-equipe-3-clients"),
-                expiresInMinutes),
+                expiresInMinutes,
+                refreshExpiresInDays),
             Storage = new StorageOptions(
                 Path.GetFullPath(Read(configuration, "STORAGE_DIR", "./storage"))),
+            Redis = new RedisOptions(redisConnection),
             PasswordReset = new PasswordResetOptions(resetExpiresInMinutes),
             Frontend = new FrontendOptions(
                 Read(configuration, "FRONTEND_URL", "http://localhost:5173").TrimEnd('/')),

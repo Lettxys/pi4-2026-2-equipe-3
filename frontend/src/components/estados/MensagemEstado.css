@@ -1,0 +1,79 @@
+.mensagem-estado {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  box-sizing: border-box;
+  margin: 8px 0;
+  padding: 12px 14px;
+  border: 1px solid transparent;
+  border-left-width: 4px;
+  border-radius: 12px;
+  font-size: 14px;
+  line-height: 1.5;
+  color: #1b365d;
+  background: #f1f9f7;
+  border-left-color: #1a9e94;
+  box-shadow: 0 4px 14px rgba(27, 54, 93, 0.06);
+}
+
+.mensagem-estado__icone {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 24px;
+  height: 24px;
+  border-radius: 999px;
+  font-weight: 700;
+  font-size: 13px;
+  line-height: 1;
+  background: rgba(255, 255, 255, 0.75);
+}
+
+.mensagem-estado__texto {
+  overflow-wrap: anywhere;
+}
+
+.mensagem-estado--vazio {
+  background: #eff6ff;
+  color: #1d4ed8;
+  border-left-color: #1d4ed8;
+}
+
+.mensagem-estado--carregando {
+  background: #e8f8f5;
+  color: #0f766e;
+  border-left-color: #1a9e94;
+}
+
+.mensagem-estado--erro {
+  background: #fee2e2;
+  color: #b91c1c;
+  border-left-color: #dc2626;
+}
+
+.mensagem-estado--sucesso {
+  background: #dcfce7;
+  color: #166534;
+  border-left-color: #16a34a;
+}
+
+.mensagem-estado--carregando .mensagem-estado__icone {
+  animation: mensagem-girar 1s linear infinite;
+}
+
+@keyframes mensagem-girar {
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mensagem-estado--carregando .mensagem-estado__icone {
+    animation: none;
+  }
+}

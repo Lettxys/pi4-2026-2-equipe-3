@@ -208,7 +208,7 @@ export default function Quiz({ voltarInicio, abrirLogin, concluir, nenhumaOpcao 
 
       <header className="relative z-20 bg-white shadow-[0_6px_16px_-6px_rgba(27,54,93,0.12)]">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
-          <span className="text-2xl font-semibold text-[#1a9e94]">isenta+</span>
+          <span className="text-2xl font-semibold text-[#1a9e94]"><a href="main.tsx">isenta+</a></span>
           <div className="flex items-center gap-4">
             <button onClick={voltarInicio} className="text-sm font-medium hover:text-[#1a9e94]">
               Início

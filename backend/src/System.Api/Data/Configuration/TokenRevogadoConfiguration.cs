@@ -10,5 +10,7 @@ public class TokenRevogadoConfiguration : IEntityTypeConfiguration<TokenRevogado
     {
         builder.HasKey(t => t.Jti);
         builder.Property(t => t.Jti).HasMaxLength(64);
+
+        builder.HasIndex(t => t.ExpiraEm);
     }
 }

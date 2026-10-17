@@ -419,6 +419,9 @@ namespace System.Api.Migrations
                         .HasDatabaseName("ix_processo_usuario_id")
                         .HasFilter("status <> 'COMPLETED'");
 
+                    b.HasIndex(new[] { "UsuarioId" }, "ix_processo_usuario_id_todos")
+                        .HasDatabaseName("ix_processo_usuario_id_todos");
+
                     b.ToTable("processo", null, t =>
                         {
                             t.HasCheckConstraint("ck_processo_cnh", "tipo_perfil = 'PCD_DRIVER' OR (cnh_numero IS NULL AND cnh_validade IS NULL AND cnh_possui_restricao IS NULL)");
@@ -660,6 +663,9 @@ namespace System.Api.Migrations
 
                     b.HasKey("Jti")
                         .HasName("pk_token_revogado");
+
+                    b.HasIndex("ExpiraEm")
+                        .HasDatabaseName("ix_token_revogado_expira_em");
 
                     b.ToTable("token_revogado", (string)null);
                 });

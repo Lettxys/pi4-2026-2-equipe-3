@@ -25,6 +25,7 @@ public class ProcessoConfiguration : IEntityTypeConfiguration<Processo>
         builder.Property(p => p.VeiculoValor).HasPrecision(12, 2);
 
         builder.HasIndex(p => p.UsuarioId).IsUnique().HasFilter("status <> 'COMPLETED'");
+        builder.HasIndex(p => p.UsuarioId, "ix_processo_usuario_id_todos").HasDatabaseName("ix_processo_usuario_id_todos");
 
         builder.HasOne(p => p.Usuario)
             .WithMany(u => u.Processos)

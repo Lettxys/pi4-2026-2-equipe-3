@@ -86,6 +86,7 @@ services:
     image: pi4-frontend:dev
     container_name: pi4-frontend
     restart: unless-stopped
+    command: ["npm", "run", "dev", "--", "--host"]
     environment:
       VITE_API_URL: ${VITE_API_URL:-http://localhost:3000}
       CHOKIDAR_USEPOLLING: "true"

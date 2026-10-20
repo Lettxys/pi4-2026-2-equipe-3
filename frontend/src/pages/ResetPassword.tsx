@@ -1,49 +1,14 @@
 import { useState } from 'react';
 import type { FormEvent } from 'react';
-import { isAxiosError } from 'axios';
 
 import './ResetPassword.css';
-import { redefinirSenha } from '../services/api';
+import { extrairMensagemDeErro, redefinirSenha } from '../services/api';
 import MensagemEstado from '../components/estados/MensagemEstado';
 
 interface ResetPasswordProps {
   token: string;
   fechar: () => void;
   voltarLogin: () => void;
-}
-
-function extrairMensagemDeErro(error: unknown): string {
-  if (isAxiosError(error)) {
-    const dados = error.response?.data;
-
-    if (typeof dados === 'string' && dados.trim()) {
-      return dados;
-    }
-
-    if (dados && typeof dados === 'object') {
-      const resposta = dados as {
-        message?: string;
-        mensagem?: string;
-        title?: string;
-        detail?: string;
-      };
-
-      if (resposta.message) return resposta.message;
-      if (resposta.mensagem) return resposta.mensagem;
-      if (resposta.detail) return resposta.detail;
-      if (resposta.title) return resposta.title;
-    }
-
-    if (!error.response) {
-      return 'Não foi possível conectar ao servidor. Tente novamente.';
-    }
-  }
-
-  if (error instanceof Error && error.message) {
-    return error.message;
-  }
-
-  return 'Erro ao alterar a senha. Tente novamente.';
 }
 
 export default function ResetPassword({
@@ -77,6 +42,11 @@ export default function ResetPassword({
 
     if (novaSenha.length < 8) {
       setErro('A nova senha deve ter pelo menos 8 caracteres.');
+      return;
+    }
+
+    if (novaSenha.length > 128) {
+      setErro('A nova senha deve ter no máximo 128 caracteres.');
       return;
     }
 
@@ -125,7 +95,12 @@ export default function ResetPassword({
       setNovaSenha('');
       setConfirmarSenha('');
     } catch (error: unknown) {
-      setErro(extrairMensagemDeErro(error));
+      setErro(
+        extrairMensagemDeErro(
+          error,
+          'Erro ao alterar a senha. Tente novamente.'
+        )
+      );
     } finally {
       setCarregando(false);
     }

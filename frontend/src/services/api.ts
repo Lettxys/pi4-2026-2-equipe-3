@@ -1,6 +1,5 @@
-import axios, { AxiosError } from 'axios';
+import axios, { AxiosError, isAxiosError } from 'axios';
 
-// Porta definida em Properties/launchSettings.json (perfil "http")
 const API_URL =
   import.meta.env.VITE_API_URL ||
   'http://localhost:3000';
@@ -17,7 +16,6 @@ export const api = axios.create({
   timeout: 10000,
 });
 
-// Envia o token JWT em toda requisição (as rotas com [Authorize] exigem isso)
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem(TOKEN_KEY);
 
@@ -32,50 +30,34 @@ api.interceptors.response.use(
   (response) => response,
 
   (error: AxiosError) => {
-
     if (error.response) {
-
       console.error(
         `[API Error ${error.response.status}]:`,
         error.response.data
       );
-
     } else if (error.request) {
-
-      console.error(
-        '[API Error]: O backend não respondeu.'
-      );
-
+      console.error('[API Error]: O backend não respondeu.');
     } else {
-
-      console.error(
-        '[API Error]:',
-        error.message
-      );
-
+      console.error('[API Error]:', error.message);
     }
 
     return Promise.reject(error);
   }
 );
 
-// Rotas do AuthController: [Route("api/auth")] + o nome de cada ação
 const AUTH = '/api/auth';
 
 export const ROTAS = {
-  registrar: `${AUTH}/register`,              // POST  (pública)
-  login: `${AUTH}/login`,                     // POST  (pública)
-  eu: `${AUTH}/me`,                           // GET   (precisa de token)
-  esqueciSenha: `${AUTH}/forgot-password`,    // POST  (pública)
-  redefinirSenha: `${AUTH}/reset-password`,   // POST  (pública)
-  alterarSenha: `${AUTH}/change-password`,    // PATCH (precisa de token)
-  sair: `${AUTH}/logout`,                     // POST  (precisa de token)
+  registrar: `${AUTH}/register`,
+  login: `${AUTH}/login`,
+  eu: `${AUTH}/me`,
+  esqueciSenha: `${AUTH}/forgot-password`,
+  verificarCodigo: `${AUTH}/verify-code`,
+  redefinirSenha: `${AUTH}/reset-password`,
+  alterarSenha: `${AUTH}/change-password`,
+  sair: `${AUTH}/logout`,
 };
 
-// ---------- Tipos (iguais aos DTOs em backend/src/System.Api/DTO/Auth) ----------
-
-// O valor depende de como o enum TipoPerfil é serializado no backend
-// (número por padrão; texto se houver JsonStringEnumConverter)
 export type TipoPerfil = number | string;
 
 export interface LoginData {
@@ -118,6 +100,15 @@ export interface MeResponse {
   activeProcessId: number | null;
 }
 
+export interface VerificarCodigoData {
+  email: string;
+  code: string;
+}
+
+export interface VerifyCodeResponse {
+  resetToken: string;
+}
+
 export interface RedefinirSenhaData {
   token: string;
   newPassword: string;
@@ -132,57 +123,71 @@ export interface MessageResponse {
   message: string;
 }
 
-// ---------- Chamadas ----------
+interface ApiErrorBody {
+  message?: string;
+  details?: { field?: string | null; message: string }[];
+}
 
-export async function fazerLogin(
-  dados: LoginData
-) {
+export function extrairMensagemDeErro(error: unknown, padrao: string): string {
+  if (!isAxiosError(error)) {
+    return padrao;
+  }
 
-  const resposta = await api.post<LoginResponse>(
-    ROTAS.login,
-    dados
-  );
+  if (!error.response) {
+    return 'Não foi possível conectar ao servidor.';
+  }
+
+  const dados = error.response.data as ApiErrorBody | undefined;
+
+  const detalhes = (dados?.details ?? [])
+    .map((item) => item.message)
+    .filter(Boolean);
+
+  if (detalhes.length > 0) {
+    return detalhes.join(' ');
+  }
+
+  return dados?.message ?? padrao;
+}
+
+export async function fazerLogin(dados: LoginData) {
+  const resposta = await api.post<LoginResponse>(ROTAS.login, dados);
 
   localStorage.setItem(TOKEN_KEY, resposta.data.accessToken);
 
   return resposta.data;
 }
 
-export async function registrarUsuario(
-  dados: RegistrarData
-) {
+export async function registrarUsuario(dados: RegistrarData) {
+  const resposta = await api.post<RegisterResponse>(ROTAS.registrar, dados);
 
-  const resposta = await api.post<RegisterResponse>(
-    ROTAS.registrar,
+  return resposta.data;
+}
+
+export async function buscarUsuarioLogado() {
+  const resposta = await api.get<MeResponse>(ROTAS.eu);
+
+  return resposta.data;
+}
+
+export async function esqueciSenha(email: string) {
+  const resposta = await api.post<MessageResponse>(ROTAS.esqueciSenha, {
+    email,
+  });
+
+  return resposta.data;
+}
+
+export async function verificarCodigo(dados: VerificarCodigoData) {
+  const resposta = await api.post<VerifyCodeResponse>(
+    ROTAS.verificarCodigo,
     dados
   );
 
   return resposta.data;
 }
 
-export async function buscarUsuarioLogado() {
-
-  const resposta = await api.get<MeResponse>(ROTAS.eu);
-
-  return resposta.data;
-}
-
-export async function esqueciSenha(
-  email: string
-) {
-
-  const resposta = await api.post<MessageResponse>(
-    ROTAS.esqueciSenha,
-    { email }
-  );
-
-  return resposta.data;
-}
-
-export async function redefinirSenha(
-  dados: RedefinirSenhaData
-) {
-
+export async function redefinirSenha(dados: RedefinirSenhaData) {
   const resposta = await api.post<MessageResponse>(
     ROTAS.redefinirSenha,
     dados
@@ -191,10 +196,7 @@ export async function redefinirSenha(
   return resposta.data;
 }
 
-export async function alterarSenha(
-  dados: AlterarSenhaData
-) {
-
+export async function alterarSenha(dados: AlterarSenhaData) {
   const resposta = await api.patch<MessageResponse>(
     ROTAS.alterarSenha,
     dados
@@ -204,11 +206,9 @@ export async function alterarSenha(
 }
 
 export async function sair() {
-
   try {
     await api.post<MessageResponse>(ROTAS.sair);
   } finally {
-    // Remove o token mesmo se a chamada falhar
     localStorage.removeItem(TOKEN_KEY);
   }
 }

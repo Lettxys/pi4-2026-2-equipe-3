@@ -6,15 +6,23 @@ import Quiz from './pages/Quiz';
 import Login from './pages/Login';
 import Registrar from './pages/Registrar';
 import ForgotPassword from './pages/ForgotPassword';
+import VerificarCodigo from './pages/VerificarCodigo';
 import ResetPassword from './pages/ResetPassword';
 
 type Pagina = 'landing' | 'calculadora' | 'quiz';
 
-type Modal = | 'login' | 'registrar' | 'ForgotPassword' | 'ResetPassword' | null;
+type Modal =
+  | 'login'
+  | 'registrar'
+  | 'ForgotPassword'
+  | 'VerificarCodigo'
+  | 'ResetPassword'
+  | null;
 
 function App() {
   const [pagina, setPagina] = useState<Pagina>('landing');
   const [modal, setModal] = useState<Modal>(null);
+  const [emailRecuperacao, setEmailRecuperacao] = useState('');
   const [tokenRedefinicao, setTokenRedefinicao] = useState('');
 
   function irPara(destino: Pagina) {
@@ -28,11 +36,13 @@ function App() {
   }
 
   function voltarLogin() {
+    setEmailRecuperacao('');
     setTokenRedefinicao('');
     setModal('login');
   }
 
   function fecharModal() {
+    setEmailRecuperacao('');
     setTokenRedefinicao('');
     setModal(null);
   }
@@ -75,6 +85,19 @@ function App() {
         <ForgotPassword
           onVoltar={() => setModal('login')}
           onFechar={fecharModal}
+          onCodigoEnviado={(email) => {
+            setEmailRecuperacao(email);
+            setModal('VerificarCodigo');
+          }}
+        />
+      )}
+
+      {modal === 'VerificarCodigo' && (
+        <VerificarCodigo
+          email={emailRecuperacao}
+          onVoltar={() => setModal('ForgotPassword')}
+          onFechar={fecharModal}
+          onVerificado={abrirRedefinicaoSenha}
         />
       )}
 

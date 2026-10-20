@@ -1,85 +1,55 @@
 ﻿import { useState } from 'react';
 import type { FormEvent } from 'react';
-import { isAxiosError } from 'axios';
 
 import './ForgotPassword.css';
 import MensagemEstado from '../components/estados/MensagemEstado';
-import { esqueciSenha } from '../services/api';
+import { esqueciSenha, extrairMensagemDeErro } from '../services/api';
 
-function extrairMensagemDeErro(error: unknown): string {
-  if (isAxiosError(error)) {
-    const dados = error.response?.data as
-      | { message?: string; details?: unknown[] }
-      | undefined;
-
-    if (!dados) {
-      return 'Nao foi possivel conectar ao servidor.';
-    }
-
-    const detalhes = (dados.details ?? [])
-      .map((item) => {
-        if (typeof item === 'string') {
-          return item;
-        }
-
-        if (
-          item &&
-          typeof item === 'object' &&
-          'message' in item
-        ) {
-          return String(
-            (item as { message: unknown }).message
-          );
-        }
-
-        return '';
-      })
-      .filter(Boolean);
-
-    if (detalhes.length > 0) {
-      return detalhes.join(' ');
-    }
-
-    return (
-      dados.message ??
-      'Nao foi possivel solicitar a recuperacao. Tente novamente.'
-    );
-  }
-
-  return 'Nao foi possivel solicitar a recuperacao. Tente novamente.';
-}
 interface ForgotPasswordProps {
   onVoltar: () => void;
   onFechar: () => void;
+  onCodigoEnviado: (email: string) => void;
 }
+
+const REGEX_EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export default function ForgotPassword({
   onVoltar,
   onFechar,
+  onCodigoEnviado,
 }: ForgotPasswordProps) {
   const [email, setEmail] = useState('');
-  const [mensagem, setMensagem] = useState('');
   const [erro, setErro] = useState('');
   const [carregando, setCarregando] = useState(false);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-
     setErro('');
-    setMensagem('');
 
-    if (!email.trim()) {
+    const emailLimpo = email.trim();
+
+    if (!emailLimpo) {
       setErro('Informe seu e-mail.');
+      return;
+    }
+
+    if (!REGEX_EMAIL.test(emailLimpo)) {
+      setErro('E-mail inválido.');
       return;
     }
 
     setCarregando(true);
 
     try {
-      const resposta = await esqueciSenha(email.trim());
-      setMensagem(resposta.message);
+      await esqueciSenha(emailLimpo);
+      onCodigoEnviado(emailLimpo);
     } catch (error) {
-      setErro(extrairMensagemDeErro(error));
+      setErro(
+        extrairMensagemDeErro(
+          error,
+          'Não foi possível solicitar a recuperação. Tente novamente.'
+        )
+      );
     } finally {
       setCarregando(false);
     }
@@ -108,11 +78,11 @@ export default function ForgotPassword({
         <h2 id="forgot-titulo">Esqueceu sua senha?</h2>
 
         <p className="forgot-descricao">
-          Informe o e-mail cadastrado na sua conta para solicitar
-          a recuperação da senha.
+          Informe o e-mail cadastrado na sua conta para receber o código de
+          recuperação.
         </p>
 
-        <form className="forgot-form" onSubmit={handleSubmit}>
+        <form className="forgot-form" onSubmit={handleSubmit} noValidate>
           <div className="forgot-campo">
             <label htmlFor="forgot-email">E-mail</label>
 
@@ -123,20 +93,18 @@ export default function ForgotPassword({
               autoComplete="email"
               value={email}
               onChange={(event) => setEmail(event.target.value)}
-              required
               disabled={carregando}
             />
           </div>
 
           <MensagemEstado tipo="erro" mensagem={erro} />
-          <MensagemEstado tipo="sucesso" mensagem={mensagem} />
 
           <button
             type="submit"
             className="forgot-botao"
             disabled={carregando}
           >
-            {carregando ? 'Enviando...' : 'Recuperar senha'}
+            {carregando ? 'Enviando...' : 'Enviar código'}
           </button>
         </form>
 
@@ -145,8 +113,12 @@ export default function ForgotPassword({
           className="forgot-voltar"
           onClick={onVoltar}
           disabled={carregando}
+          style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '6px',width: '100%' }}
         >
-          ← Voltar para o login
+          <span className="material-icons" style={{ fontSize: '18px' }} aria-hidden="true">
+            arrow_back
+          </span>
+          Voltar para o login
         </button>
       </section>
     </div>

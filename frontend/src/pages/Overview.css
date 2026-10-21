@@ -28,6 +28,7 @@ button {
 
 .overview-page {
   min-height: 100vh;
+  overflow-x: hidden;
   background: var(--fundo);
   font-size: 16px;
 }
@@ -41,14 +42,14 @@ button {
   display: flex;
   align-items: center;
   gap: 20px;
-  padding: 0 38px;
+  padding: 0 clamp(16px, 1.4vw, 38px);
   background: #fff;
   border-bottom: 1px solid var(--borda);
 }
 
 .overview-logo {
   color: var(--verde);
-  font-size: 40px;
+  font-size: clamp(30px, 2.7vw, 54px);
   font-weight: 700;
   letter-spacing: -1.5px;
   line-height: 1;
@@ -58,9 +59,9 @@ button {
   display: flex;
   align-items: center;
   gap: 12px;
-  margin-left: 130px;
+  margin-left: clamp(40px, 7vw, 130px);
   color: var(--texto);
-  font-size: 18px;
+  font-size: clamp(16px, 1.2vw, 24px);
 }
 
 .overview-breadcrumb span:last-child {
@@ -73,7 +74,7 @@ button {
   align-items: center;
   gap: 24px;
   margin-left: auto;
-  margin-right: 40px;
+  margin-right: clamp(16px, 2vw, 40px);
 }
 
 .overview-header-actions > button {
@@ -81,7 +82,7 @@ button {
   border: 0;
   background: transparent;
   color: var(--verde-escuro);
-  font-size: 18px;
+  font-size: clamp(16px, 1.15vw, 23px);
   font-weight: 500;
   cursor: default;
 }
@@ -100,7 +101,7 @@ button {
   border-left: 1px solid var(--borda);
   background: transparent;
   color: var(--verde-escuro);
-  font-size: 19px;
+  font-size: clamp(16px, 1.2vw, 24px);
   font-weight: 500;
   cursor: pointer;
 }
@@ -227,7 +228,7 @@ button {
 
 .overview-layout {
   display: grid;
-  grid-template-columns: 297px minmax(0, 1fr);
+  grid-template-columns: clamp(230px, 16vw, 420px) minmax(0, 1fr);
   min-height: calc(100vh - 78px);
 }
 
@@ -256,7 +257,7 @@ button {
   background: transparent;
   color: var(--azul);
   text-align: left;
-  font-size: 18px;
+  font-size: clamp(17px, 1.3vw, 26px);
   font-weight: 500;
   cursor: default;
 }
@@ -264,7 +265,7 @@ button {
 .overview-menu button.active {
   background: #e3f6f2;
   color: var(--verde-escuro);
-  font-size: 20px;
+  font-size: clamp(18px, 1.4vw, 28px);
   font-weight: 600;
 }
 
@@ -279,7 +280,16 @@ button {
   padding-left: 28px;
   border-radius: 0;
   border-left: 2px solid var(--borda);
-  font-size: 17px;
+  font-size: clamp(16px, 1.2vw, 24px);
+}
+
+.overview-menu button .overview-menu-glyph {
+  -webkit-text-stroke: 1px currentColor;
+}
+
+.overview-menu button .overview-menu-doc {
+  -webkit-text-stroke: 0.5px currentColor;
+  font-size: clamp(24px, 1.9vw, 34px);
 }
 
 .overview-profile {
@@ -302,14 +312,14 @@ button {
 .overview-profile strong {
   display: block;
   margin-bottom: 8px;
-  font-size: 19px;
+  font-size: clamp(17px, 1.3vw, 26px);
   font-weight: 600;
 }
 
 .overview-profile p {
   margin: 0 0 14px;
   color: var(--texto);
-  font-size: 15px;
+  font-size: clamp(14px, 1.05vw, 21px);
   line-height: 1.5;
 }
 
@@ -327,11 +337,12 @@ button {
 
 .overview-content {
   display: grid;
-  grid-template-columns: minmax(0, 860px) 520px;
-  justify-content: space-between;
+  grid-template-columns: minmax(0, 1fr) clamp(340px, 25.4vw, 620px);
+  justify-content: start;
   align-items: start;
-  gap: 40px;
-  padding: 32px 34px 40px 80px;
+  gap: clamp(40px, 6.3vw, 120px);
+  width: 100%;
+  padding: 32px clamp(20px, 1.7vw, 36px) 40px clamp(24px, 4.25vw, 80px);
 }
 
 .overview-main {
@@ -341,7 +352,7 @@ button {
 .overview-intro h1 {
   margin: 14px 0 14px;
   color: var(--azul);
-  font-size: clamp(38px, 3.8vw, 58px);
+  font-size: clamp(38px, 3.2vw, 76px);
   font-weight: 700;
   line-height: 1.04;
   letter-spacing: -2px;
@@ -355,7 +366,7 @@ button {
 .overview-intro > p {
   margin: 0 0 16px;
   color: var(--texto);
-  font-size: 22px;
+  font-size: clamp(20px, 1.55vw, 32px);
   line-height: 1.4;
 }
 
@@ -366,15 +377,15 @@ button {
   gap: 10px;
   margin-bottom: 28px;
   color: var(--texto-claro);
-  font-size: 15px;
+  font-size: clamp(13px, 0.94vw, 20px);
 }
 
 .overview-tags b {
-  padding: 7px 14px;
+  padding: clamp(6px, 0.5vw, 10px) clamp(12px, 1vw, 20px);
   border-radius: 20px;
   background: #e3f5f1;
   color: var(--verde-escuro);
-  font-size: 15px;
+  font-size: clamp(13px, 0.94vw, 20px);
   font-weight: 500;
 }
 
@@ -383,10 +394,11 @@ button {
 .overview-progress {
   display: flex;
   align-items: center;
-  gap: 20px;
+  flex-wrap: wrap;
+  gap: clamp(10px, 1.4vw, 20px);
   margin-bottom: 40px;
-  height: 94px;
-  padding: 0 22px;
+  min-height: clamp(94px, 6.8vw, 132px);
+  padding: clamp(10px, 0.9vw, 22px) clamp(14px, 1.1vw, 22px);
   border: 1px solid #d3ede8;
   border-radius: 14px;
   background: #e9f7f4;
@@ -396,8 +408,8 @@ button {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 56px;
-  height: 56px;
+  width: clamp(56px, 4vw, 78px);
+  height: clamp(56px, 4vw, 78px);
   flex-shrink: 0;
   border-radius: 50%;
   background: #fff;
@@ -409,24 +421,23 @@ button {
   display: flex;
   flex-direction: column;
   gap: 4px;
-  min-width: 190px;
+  min-width: clamp(150px, 12vw, 230px);
 }
 
 .overview-progress-info strong {
-  font-size: 19px;
+  font-size: clamp(17px, 1.3vw, 26px);
   font-weight: 600;
 }
 
 .overview-progress-info span {
   color: var(--texto);
-  font-size: 16px;
+  font-size: clamp(15px, 1.12vw, 22px);
 }
 
 .overview-progress-bar {
-  width: 300px;
-  max-width: 40%;
+  flex: 0 1 300px;
+  min-width: 60px;
   height: 10px;
-  flex: none;
   overflow: hidden;
   border-radius: 10px;
   background: #dbe6e8;
@@ -444,28 +455,33 @@ button {
 .overview-progress-percent {
   margin-left: 6px;
   color: var(--verde-escuro);
-  font-size: 18px;
+  font-size: clamp(17px, 1.3vw, 26px);
   font-weight: 600;
 }
 
 /* ============ Etapas ============ */
 
 .overview-steps {
+  --icone: clamp(104px, 7.4vw, 176px);
+  --base: calc(var(--icone) * 0.4615);
+  --zig: calc(var(--icone) * 0.4183);
+  --badge: clamp(40px, 2.85vw, 68px);
+  --gap-col: clamp(16px, 1.15vw, 27px);
   position: relative;
   display: flex;
   flex-direction: column;
-  gap: 26px;
+  gap: calc(var(--icone) * 0.25);
 }
 
 .overview-step {
   position: relative;
   display: grid;
-  grid-template-columns: 58px 40px minmax(0, 1fr) auto;
+  grid-template-columns: calc(var(--icone) / 2 + 6px) var(--badge) minmax(0, 1fr) auto;
   align-items: center;
-  column-gap: 16px;
-  min-height: 125px;
-  margin-left: 48px;
-  padding: 14px 26px 14px 0;
+  column-gap: var(--gap-col);
+  min-height: calc(var(--icone) + 21px);
+  margin-left: var(--base);
+  padding: 14px clamp(26px, 1.9vw, 45px) 14px 0;
   border: 1px solid var(--borda);
   border-radius: 16px;
   background: #fff;
@@ -473,11 +489,11 @@ button {
 }
 
 /* Zigue-zague das etapas */
-.overview-step:nth-child(2) { margin-left: 91px; }
-.overview-step:nth-child(3) { margin-left: 135px; }
-.overview-step:nth-child(4) { margin-left: 91px; }
-.overview-step:nth-child(5) { margin-left: 48px; }
-.overview-step:nth-child(6) { margin-left: 91px; }
+.overview-step:nth-child(2) { margin-left: calc(var(--base) + var(--zig)); }
+.overview-step:nth-child(3) { margin-left: calc(var(--base) + 2 * var(--zig)); }
+.overview-step:nth-child(4) { margin-left: calc(var(--base) + var(--zig)); }
+.overview-step:nth-child(5) { margin-left: var(--base); }
+.overview-step:nth-child(6) { margin-left: calc(var(--base) + var(--zig)); }
 
 /* ============ Curvas entre as etapas ============ */
 
@@ -485,8 +501,8 @@ button {
   content: "";
   position: absolute;
   z-index: 1;
-  top: -36px;
-  height: 47px;
+  top: calc(var(--icone) * -0.3462);
+  height: calc(var(--icone) * 0.4519);
   background-repeat: no-repeat;
   background-size: 100% 100%;
   pointer-events: none;
@@ -494,38 +510,38 @@ button {
 
 
 .overview-step:nth-child(2)::before {
-  top: -50px;
-  height: 61px;
-  left: -43px;
-  width: 43px;
+  top: calc(var(--icone) * -0.4808);
+  height: calc(var(--icone) * 0.5865);
+  left: calc(var(--zig) * -1);
+  width: var(--zig);
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 43 61'%3E%3Cpath d='M1.5 0 C1.5 30 41.5 31 41.5 61' fill='none' stroke='%238fd6cd' stroke-width='3' stroke-linecap='round'/%3E%3C/svg%3E");
 }
 
 /* Etapa 2 → 3 (vai para a direita) */
 .overview-step:nth-child(3)::before {
-  left: -44px;
-  width: 44px;
+  left: calc(var(--zig) * -1);
+  width: var(--zig);
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 44 47'%3E%3Cpath d='M1.5 0 C1.5 23 42.5 24 42.5 47' fill='none' stroke='%23a9cfd5' stroke-width='3' stroke-linecap='round' stroke-dasharray='0.1 7'/%3E%3C/svg%3E");
 }
 
 /* Etapa 3 → 4 (volta para a esquerda) */
 .overview-step:nth-child(4)::before {
   left: 0;
-  width: 44px;
+  width: var(--zig);
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 44 47'%3E%3Cpath d='M42.5 0 C42.5 23 1.5 24 1.5 47' fill='none' stroke='%23a9cfd5' stroke-width='3' stroke-linecap='round' stroke-dasharray='0.1 7'/%3E%3C/svg%3E");
 }
 
 /* Etapa 4 → 5 (esquerda) */
 .overview-step:nth-child(5)::before {
   left: 0;
-  width: 43px;
+  width: var(--zig);
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 43 47'%3E%3Cpath d='M41.5 0 C41.5 23 1.5 24 1.5 47' fill='none' stroke='%23a9cfd5' stroke-width='3' stroke-linecap='round' stroke-dasharray='0.1 7'/%3E%3C/svg%3E");
 }
 
 /* Etapa 5 → 6 (direita) */
 .overview-step:nth-child(6)::before {
-  left: -43px;
-  width: 43px;
+  left: calc(var(--zig) * -1);
+  width: var(--zig);
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 43 47'%3E%3Cpath d='M1.5 0 C1.5 23 41.5 24 41.5 47' fill='none' stroke='%23a9cfd5' stroke-width='3' stroke-linecap='round' stroke-dasharray='0.1 7'/%3E%3C/svg%3E");
 }
 
@@ -536,10 +552,10 @@ button {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 104px;
-  height: 104px;
-  margin-left: -52px;
-  border: 8px solid #fff;
+  width: var(--icone);
+  height: var(--icone);
+  margin-left: calc(var(--icone) / -2);
+  border: clamp(8px, 0.6vw, 14px) solid #fff;
   border-radius: 50%;
   background: var(--cinza-icone);
   box-shadow: 0 0 0 3px #e2e9f0;
@@ -547,16 +563,21 @@ button {
   font-size: 34px;
 }
 
+.overview-step-icon svg {
+  width: 38%;
+  height: auto;
+}
+
 .overview-step-number {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 40px;
-  height: 40px;
+  width: var(--badge);
+  height: var(--badge);
   border-radius: 50%;
   background: #e7eef4;
   color: #7189a4;
-  font-size: 20px;
+  font-size: clamp(18px, 1.4vw, 28px);
   font-weight: 600;
 }
 
@@ -567,7 +588,7 @@ button {
 .overview-step-info h2 {
   margin: 0 0 8px;
   color: var(--azul);
-  font-size: 22px;
+  font-size: clamp(20px, 1.6vw, 32px);
   font-weight: 600;
 }
 
@@ -582,7 +603,7 @@ button {
 
 .overview-step-info li {
   color: var(--texto-claro);
-  font-size: 16px;
+  font-size: clamp(14px, 1.02vw, 22px);
   line-height: 1.4;
 }
 
@@ -599,17 +620,17 @@ button {
 
 
 .overview-step-current {
-  min-height: 155px;
+  min-height: calc(var(--icone) + 51px);
   border: 2px solid var(--verde);
   border-radius: 16px;
   box-shadow: 0 6px 18px rgb(16 169 157 / 10%);
 }
 
 .overview-step-current .overview-step-icon {
-  width: 106px;
-  height: 106px;
-  margin-left: -53px;
-  border: 8px solid #fff;
+  width: calc(var(--icone) + 2px);
+  height: calc(var(--icone) + 2px);
+  margin-left: calc((var(--icone) + 2px) / -2);
+  border: clamp(8px, 0.6vw, 14px) solid #fff;
   background: var(--verde-escuro);
   box-shadow: 0 0 0 5px #a3ddd5;
   color: #fff;
@@ -622,7 +643,7 @@ button {
 }
 
 .overview-step-current .overview-step-info h2 {
-  font-size: 24px;
+  font-size: clamp(21px, 1.75vw, 35px);
 }
 
 .overview-step-current .overview-step-info li {
@@ -639,14 +660,14 @@ button {
   align-items: center;
   justify-content: center;
   gap: 10px;
-  height: 50px;
-  padding: 0 26px;
+  height: clamp(50px, 3.4vw, 72px);
+  padding: 0 clamp(22px, 1.6vw, 42px);
   border: 0;
   border-radius: 25px;
   background: var(--verde-escuro);
   color: #fff;
   white-space: nowrap;
-  font-size: 19px;
+  font-size: clamp(17px, 1.25vw, 26px);
   font-weight: 500;
   cursor: default;
 }
@@ -661,21 +682,26 @@ button {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 46px;
-  height: 46px;
+  width: clamp(46px, 3.3vw, 78px);
+  height: clamp(46px, 3.3vw, 78px);
   border-radius: 50%;
   background: #e9eef4;
   color: #8ba2bb;
   font-size: 20px;
 }
 
+.overview-lock svg {
+  width: 38%;
+  height: auto;
+}
+
 .overview-saved {
   display: flex;
   align-items: flex-start;
   gap: 10px;
-  margin: 26px 0 0 48px;
+  margin: 26px 0 0 var(--base);
   color: var(--texto);
-  font-size: 15px;
+  font-size: clamp(14px, 1.05vw, 21px);
   line-height: 1.5;
 }
 
@@ -688,7 +714,7 @@ button {
 }
 
 .overview-how {
-  padding: 28px;
+  padding: clamp(20px, 1.6vw, 32px);
   border-radius: 20px;
   background: #e8f6f3;
 }
@@ -697,7 +723,7 @@ button {
 .overview-deadlines h2 {
   margin: 0 0 24px;
   color: var(--azul);
-  font-size: 30px;
+  font-size: clamp(26px, 2.1vw, 42px);
   font-weight: 600;
   letter-spacing: -0.5px;
 }
@@ -707,15 +733,15 @@ button {
   align-items: flex-start;
   gap: 18px;
   margin-bottom: 24px;
-  
+
 }
 
 .overview-explanation > span {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 54px;
-  height: 54px;
+  width: clamp(44px, 3.4vw, 60px);
+  height: clamp(44px, 3.4vw, 60px);
   flex-shrink: 0;
   border-radius: 50%;
   background: #d3efe9;
@@ -727,14 +753,14 @@ button {
   display: block;
   margin: 0 0 6px;
   color: var(--azul);
-  font-size: 19px;
+  font-size: clamp(17px, 1.32vw, 26px);
   font-weight: 600;
 }
 
 .overview-explanation p {
   margin: 0;
   color: var(--texto);
-  font-size: 15px;
+  font-size: clamp(14px, 1.05vw, 21px);
   line-height: 1.5;
 }
 
@@ -764,7 +790,7 @@ button {
 
 
 .overview-deadlines {
-  padding: 28px;
+  padding: clamp(20px, 1.6vw, 32px);
   border: 1px solid #e5eeee;
   border-radius: 20px;
   background: #fff;
@@ -772,7 +798,7 @@ button {
 
 .overview-deadlines h2 {
   margin-bottom: 22px;
-  font-size: 24px;
+  font-size: clamp(22px, 1.75vw, 35px);
 }
 
 .overview-deadlines > div {
@@ -793,31 +819,21 @@ button {
   border-radius: 8px;
   background: #e1f5f1;
   color: var(--verde-escuro);
-  font-size: 15px;
+  font-size: clamp(14px, 1.05vw, 21px);
   font-weight: 600;
 }
 
 .overview-deadlines > div span {
   color: var(--texto);
-  font-size: 15px;
+  font-size: clamp(14px, 1.05vw, 21px);
   line-height: 1.4;
 }
 
 
-@media (max-width: 1500px) {
-  .overview-content {
-    grid-template-columns: minmax(0, 1fr) 400px;
-    padding-left: 48px;
-  }
-
-  .overview-intro h1 {
-    font-size: 46px;
-  }
-}
-
 @media (max-width: 1100px) {
   .overview-content {
     grid-template-columns: minmax(0, 1fr);
+    gap: 24px;
     padding: 24px;
   }
 
@@ -828,7 +844,30 @@ button {
   }
 
   .overview-breadcrumb {
-    margin-left: 15px;
+    margin-left: clamp(16px, 2vw, 40px);
+  }
+}
+
+/* Tablet: sidebar recolhe e a coluna direita vira uma coluna */
+@media (max-width: 900px) {
+  .overview-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .overview-sidebar {
+    display: none;
+  }
+
+  .overview-content {
+    padding: 24px 20px 32px;
+  }
+
+  .overview-right {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .overview-steps {
+    --icone: clamp(84px, 13vw, 104px);
   }
 }
 
@@ -890,6 +929,7 @@ button {
 
   .overview-progress {
     height: auto;
+    min-height: auto;
     gap: 10px;
     padding: 12px;
   }
@@ -911,14 +951,17 @@ button {
   }
 
   .overview-steps {
+    --icone: 60px;
+    --badge: 28px;
+    --gap-col: 10px;
     gap: 16px;
     padding-left: 30px;
   }
 
   .overview-step,
   .overview-step:nth-child(n) {
-    grid-template-columns: 30px 28px minmax(0, 1fr);
-    column-gap: 10px;
+    grid-template-columns: calc(var(--icone) / 2 + 6px) var(--badge) minmax(0, 1fr);
+    column-gap: var(--gap-col);
     min-height: 100px;
     margin-left: 26px;
     padding: 12px 10px 12px 0;

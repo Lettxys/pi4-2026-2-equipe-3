@@ -244,10 +244,10 @@ export default function Overview({ aoSair }: OverviewProps) {
               <span>🏠︎</span> Visão geral
             </button>
             <button type="button">
-              <span><span style={{ WebkitTextStroke: '1px currentColor' }}>𓏬</span>☰</span> Meu processo
+              <span className="overview-menu-glyph">𓏬</span>☰ Meu processo
             </button>
             <button type="button">
-              <span style={{ WebkitTextStroke: '0.5px currentColor', fontSize:'34px'  }}>🗎</span> Documentos
+              <span className="overview-menu-doc">🗎</span> Documentos
             </button>
           </nav>
 

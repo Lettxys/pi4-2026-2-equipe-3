@@ -24,7 +24,7 @@ type Modal =
   | null;
 
 function App() {
-  const [pagina, setPagina] = useState<Pagina>('landing');
+  const [pagina, setPagina] = useState<Pagina>('overview');
   const [modal, setModal] = useState<Modal>(null);
   const [tokenRedefinicao, setTokenRedefinicao] = useState('');
 

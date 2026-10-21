@@ -7,10 +7,21 @@ import Login from './pages/Login';
 import Registrar from './pages/Registrar';
 import ForgotPassword from './pages/ForgotPassword';
 import ResetPassword from './pages/ResetPassword';
+import Overview from './pages/Overview';
+import { sair } from './services/api';
 
-type Pagina = 'landing' | 'calculadora' | 'quiz';
+type Pagina =
+  | 'landing'
+  | 'calculadora'
+  | 'quiz'
+  | 'overview';
 
-type Modal = | 'login' | 'registrar' | 'ForgotPassword' | 'ResetPassword' | null;
+type Modal =
+  | 'login'
+  | 'registrar'
+  | 'ForgotPassword'
+  | 'ResetPassword'
+  | null;
 
 function App() {
   const [pagina, setPagina] = useState<Pagina>('landing');
@@ -19,12 +30,18 @@ function App() {
 
   function irPara(destino: Pagina) {
     setPagina(destino);
-    window.scrollTo({ top: 0 });
+    setModal(null);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
-  function abrirRedefinicaoSenha(token: string) {
-    setTokenRedefinicao(token);
-    setModal('ResetPassword');
+  async function deslogar() {
+    try {
+      await sair();
+    } catch {
+      // O token é removido do localStorage mesmo se a requisição falhar
+    }
+
+    irPara('landing');
   }
 
   function voltarLogin() {
@@ -62,6 +79,8 @@ function App() {
           abrirLogin={() => setModal('login')}
         />
       )}
+
+      {pagina === 'overview' && <Overview aoSair={deslogar} />}
 
       {modal === 'login' && (
         <Login

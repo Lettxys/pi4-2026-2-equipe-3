@@ -380,3 +380,5 @@ docker compose exec db sh -c 'psql -U "$POSTGRES_USER" -d "$POSTGRES_DB"'
 # Atualizar o .NET SDK/Runtime dentro do container
 docker compose exec backend dotnet --info
 ```
+### Catálogo de Artefatos da Etapa de Requisitos
+Link de acesso ao Catálogo de Artefatos da Etapa de Requisitos(README.md) upload realizado e disponível na pasta /docs do repositório.

@@ -1,0 +1,41 @@
+Catálogo de Artefatos da Etapa de Requisitos
+📋 Apresentação da Etapa e Propósito
+A etapa de requisitos deste projeto estruturou o levantamento, análise e especificação funcional da plataforma voltada à facilitação da isenção de impostos federais e estaduais na aquisição de veículos zero quilômetro por Pessoas com Deficiência (PcD). O propósito deste documento (README.md) é servir como um índice centralizador e um mapa de navegação para todos os artefatos de engenharia de requisitos produzidos pela equipa, facilitando a auditoria, o alinhamento arquitetural e a rastreabilidade com o código-fonte.
+
+🧭 Sumário (Navegação por Marcadores)
+1. Visão Geral e Contexto
+2. Modelagem de Processos e Casos de Uso
+3. Especificação de Requisitos (Funcionais e Não Funcionais)
+4. Rastreabilidade e Gestão de Tarefas (Issues)
+5. Ordem de Leitura Recomendada
+
+🗂️ Seções por Tipo de Artefato
+1. Visão Geral e Contexto
+Documentos de fundamentação estratégica do problema e escopo inicial da aplicação.
+Link:https://github.com/Lettxys/pi4-2026-2-equipe-3/blob/6553b59d8db3281a840a9467de7f61c648a88dd6/docs/Sistema%20facilitador%20de%20isenc%CC%A7a%CC%83o%20de%20impostos%20para%20PcDs%20-%20Documento%20de%20definic%CC%A7a%CC%83o%20do%20problema%20e%20do%20escopo%20e%20documento%20de%20visa%CC%83o.pdf 
+Descrição: Apresenta a dor principal do público-alvo (burocracia e erros de preenchimento em isenções para PcD condutor e não condutor), o escopo do produto e o perfil do idealizador.
+Status: [Concluído]
+
+2. Modelagem de Processos e Casos de Uso
+Artefatos focados na interação dos atores com o sistema.
+Link:https://github.com/Lettxys/pi4-2026-2-equipe-3/blob/6553b59d8db3281a840a9467de7f61c648a88dd6/docs/Diagrama%20de%20Casos%20de%20Uso.pdf) 
+Descrição: Descrição detalhada dos fluxos de interação (Cadastrar, Preencher, Anexar, Indicar Condutores e Gerar Dossiê) estruturada via diagrama UML.
+Status: [Concluído] 
+
+3. Especificação de Requisitos (Funcionais e Não Funcionais)
+Tabelas consolidadas de requisitos, critérios de aceite em Gherkin e mapeamento de telas/wireframes.
+Link:https://github.com/Lettxys/pi4-2026-2-equipe-3/blob/6553b59d8db3281a840a9467de7f61c648a88dd6/docs/Mapeamento%20de%20Telas%20-%20Requisitos%20Funcionais%20e%20N%C3%A3o%20Funcionais.pdf 
+Descrição: Tabela unificada contendo Requisitos Funcionais (RF01 a RF10) e Não Funcionais (RNF01 a RNF05), prioridades, telas relacionadas (wireframes) e dificuldade de implementação.
+Status: [Concluído]
+
+5. Rastreabilidade e Gestão de Tarefas (Issues)
+Artefatos de controle e engenharia de software para mapeamento do ciclo de vida das funcionalidades.
+Link:https://github.com/Lettxys/pi4-2026-2-equipe-3/blob/6553b59d8db3281a840a9467de7f61c648a88dd6/docs/Matriz%20de%20rastreabilidade.pdf 
+Descrição: Relaciona de ponta a ponta cada Requisito Funcional aos respectivos Casos de Uso, Telas, Rotas da API e  Regras de Negócio.
+Status: [Concluído]
+
+📖 Ordem de Leitura Recomendada
+Para quem está a conhecer o projeto agora, sugere-se a seguinte sequência de leitura para absorção contextual e técnica adequada:
+Passo 1 (Contexto e Dor): Ler o Documento de Definição do Problema e Escopo para entender o público-alvo (cadeirantes, condutores/não condutores) e o porquê da plataforma existir.
+Passo 2 (Visão Geral de Requisitos): Consultar o Mapeamento Consolidado de Requisitos e Telas para visualizar o escopo fechado do que o frontend e o backend precisam entregar.
+Passo 3 (Arquitetura e Planeamento): Revisar a Matriz de Rastreabilidade e este repositório para conectar os requisitos às rotas da API e às tarefas do GitHub (Issues).

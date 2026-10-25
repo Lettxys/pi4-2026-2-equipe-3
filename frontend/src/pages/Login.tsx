@@ -10,6 +10,8 @@ interface LoginProps {
   fechar: () => void;
   abrirRegistrar: () => void;
   abrirForgotPassword: () => void;
+  // Chamado quando o login é aceito pelo servidor (ex.: ir para o Overview)
+  aoEntrar?: () => void;
 }
 
 function extrairMensagemDeErro(error: unknown): string {
@@ -56,10 +58,12 @@ export default function Login({
   fechar,
   abrirRegistrar,
   abrirForgotPassword,
+  aoEntrar,
 }: LoginProps) {
   const [email, setEmail] = useState('');
   const [senha, setSenha] = useState('');
   const [mostrarSenha, setMostrarSenha] = useState(false);
+  const [lembrar, setLembrar] = useState(false);
   const [carregando, setCarregando] = useState(false);
   const [erro, setErro] = useState('');
 
@@ -81,12 +85,19 @@ export default function Login({
     setCarregando(true);
 
     try {
-      await fazerLogin({
-        email: email.trim(),
-        password: senha,
-      });
+      await fazerLogin(
+        {
+          email: email.trim(),
+          password: senha,
+        },
+        lembrar
+      );
 
-      fechar();
+      if (aoEntrar) {
+        aoEntrar();
+      } else {
+        fechar();
+      }
     } catch (error) {
       setErro(extrairMensagemDeErro(error));
     } finally {
@@ -178,6 +189,8 @@ export default function Login({
             <label className="login-lembrar">
               <input
                 type="checkbox"
+                checked={lembrar}
+                onChange={(event) => setLembrar(event.target.checked)}
                 disabled={carregando}
               />
               Lembrar de mim

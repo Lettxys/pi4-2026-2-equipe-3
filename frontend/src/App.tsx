@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import Landing from './pages/Landing';
 import Calculadora from './pages/Calculadora';
@@ -8,8 +8,19 @@ import Registrar from './pages/Registrar';
 import ForgotPassword from './pages/ForgotPassword';
 import VerificarCodigo from './pages/VerificarCodigo';
 import ResetPassword from './pages/ResetPassword';
+import Overview from './pages/Overview';
+import {
+  EVENTO_SESSAO_EXPIRADA,
+  buscarUsuarioLogado,
+  sair,
+  temToken,
+} from './services/api';
 
-type Pagina = 'landing' | 'calculadora' | 'quiz';
+type Pagina =
+  | 'landing'
+  | 'calculadora'
+  | 'quiz'
+  | 'overview';
 
 type Modal =
   | 'login'
@@ -24,10 +35,51 @@ function App() {
   const [modal, setModal] = useState<Modal>(null);
   const [emailRecuperacao, setEmailRecuperacao] = useState('');
   const [tokenRedefinicao, setTokenRedefinicao] = useState('');
+  const [verificandoSessao, setVerificandoSessao] = useState(temToken());
+
+  // Ao abrir o app: se existe token salvo, confirma com o servidor e vai ao Overview
+  useEffect(() => {
+    if (!temToken()) {
+      return;
+    }
+
+    buscarUsuarioLogado()
+      .then(() => setPagina('overview'))
+      .catch(() => {
+        // 401: o token já foi limpo e a pessoa fica na landing.
+        // Outros erros (ex.: servidor fora do ar): também fica na landing.
+      })
+      .finally(() => setVerificandoSessao(false));
+  }, []);
+
+  // Se o servidor recusar o token durante o uso, volta para a landing
+  useEffect(() => {
+    function aoExpirar() {
+      setPagina('landing');
+      setModal(null);
+    }
+
+    window.addEventListener(EVENTO_SESSAO_EXPIRADA, aoExpirar);
+
+    return () => {
+      window.removeEventListener(EVENTO_SESSAO_EXPIRADA, aoExpirar);
+    };
+  }, []);
 
   function irPara(destino: Pagina) {
     setPagina(destino);
-    window.scrollTo({ top: 0 });
+    setModal(null);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  async function deslogar() {
+    try {
+      await sair();
+    } catch {
+      // O token é removido do localStorage mesmo se a requisição falhar
+    }
+
+    irPara('landing');
   }
 
   function abrirRedefinicaoSenha(token: string) {
@@ -45,6 +97,10 @@ function App() {
     setEmailRecuperacao('');
     setTokenRedefinicao('');
     setModal(null);
+  }
+
+  if (verificandoSessao) {
+    return null;
   }
 
   return (
@@ -73,11 +129,14 @@ function App() {
         />
       )}
 
+      {pagina === 'overview' && <Overview aoSair={deslogar} />}
+
       {modal === 'login' && (
         <Login
           fechar={fecharModal}
           abrirRegistrar={() => setModal('registrar')}
           abrirForgotPassword={() => setModal('ForgotPassword')}
+          aoEntrar={() => irPara('overview')}
         />
       )}
 

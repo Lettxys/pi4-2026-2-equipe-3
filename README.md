@@ -382,4 +382,4 @@ docker compose exec backend dotnet --info
 ```
 ### Catálogo de Artefatos da Etapa de Requisitos
 Link de acesso ao Catálogo de Artefatos da Etapa de Requisitos(README.md) upload realizado e disponível na pasta /docs do repositório.
-https://github.com/Lettxys/pi4-2026-2-equipe-3/blob/aa9b1043ee4eafe77ed327cc2c694eac4f45e3ce/docs/README.md%20(Cat%C3%A1logo%20de%20Artefatos%20da%20Etapa%20de%20Requisitos)
+https://github.com/Lettxys/pi4-2026-2-equipe-3/blob/5bf72ae7ec4363fe9ba20da74f66b2b0289c5eee/docs/README.md

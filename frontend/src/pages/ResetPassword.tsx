@@ -11,6 +11,58 @@ interface ResetPasswordProps {
   voltarLogin: () => void;
 }
 
+function IconeOlho({ aberto }: { aberto: boolean }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path
+        d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12Z"
+        stroke="currentColor"
+        strokeWidth="1.6"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <circle
+        cx="12"
+        cy="12"
+        r="3"
+        stroke="currentColor"
+        strokeWidth="1.6"
+      />
+      {!aberto && (
+        <path
+          d="M4 4l16 16"
+          stroke="currentColor"
+          strokeWidth="1.6"
+          strokeLinecap="round"
+        />
+      )}
+    </svg>
+  );
+}
+
+function IconeRegra({ ok }: { ok: boolean }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <circle
+        cx="12"
+        cy="12"
+        r="9"
+        stroke="currentColor"
+        strokeWidth="1.6"
+      />
+      {ok && (
+        <path
+          d="m8 12.5 3 3 5-6"
+          stroke="currentColor"
+          strokeWidth="1.6"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+      )}
+    </svg>
+  );
+}
+
 export default function ResetPassword({
   token,
   fechar,
@@ -18,11 +70,21 @@ export default function ResetPassword({
 }: ResetPasswordProps) {
   const [novaSenha, setNovaSenha] = useState('');
   const [confirmarSenha, setConfirmarSenha] = useState('');
+  const [mostrarNova, setMostrarNova] = useState(false);
+  const [mostrarConfirmar, setMostrarConfirmar] = useState(false);
   const [carregando, setCarregando] = useState(false);
   const [erro, setErro] = useState('');
   const [sucesso, setSucesso] = useState('');
 
-  const formularioVazio = !novaSenha && !confirmarSenha;
+  const regras = [
+    { texto: 'Pelo menos 8 caracteres', ok: novaSenha.length >= 8 },
+    { texto: 'Pelo menos um número', ok: /[0-9]/.test(novaSenha) },
+    { texto: 'Pelo menos uma letra maiúscula', ok: /[A-Z]/.test(novaSenha) },
+    {
+      texto: 'As duas senhas são iguais',
+      ok: novaSenha.length > 0 && novaSenha === confirmarSenha,
+    },
+  ];
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -127,13 +189,39 @@ export default function ResetPassword({
           disabled={carregando}
           aria-label="Fechar"
         >
-          ×
+          <svg viewBox="0 0 16 16" fill="none" aria-hidden="true">
+            <path
+              d="M3 3l10 10M13 3 3 13"
+              stroke="currentColor"
+              strokeWidth="1.8"
+              strokeLinecap="round"
+            />
+          </svg>
         </button>
 
-        <h2 id="reset-titulo">Alterar senha</h2>
+        <div className="reset-icone" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none">
+            <circle
+              cx="7.5"
+              cy="12"
+              r="3.8"
+              stroke="currentColor"
+              strokeWidth="1.6"
+            />
+            <path
+              d="M11.3 12H21M17.5 12v3M20.5 12v2"
+              stroke="currentColor"
+              strokeWidth="1.6"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          </svg>
+        </div>
+
+        <h2 id="reset-titulo">Crie uma nova senha</h2>
 
         <p className="reset-descricao">
-          Crie uma nova senha segura para acessar sua conta.
+          Escolha uma senha que você não usou antes.
         </p>
 
         <form
@@ -146,20 +234,32 @@ export default function ResetPassword({
               Nova senha
             </label>
 
-            <input
-              id="reset-nova-senha"
-              type="password"
-              placeholder="Digite sua nova senha"
-              value={novaSenha}
-              onChange={(event) => {
-                setNovaSenha(event.target.value);
-                setErro('');
-                setSucesso('');
-              }}
-              autoComplete="new-password"
-              disabled={carregando || Boolean(sucesso)}
-              aria-invalid={Boolean(erro)}
-            />
+            <div className="reset-input-wrap">
+              <input
+                id="reset-nova-senha"
+                type={mostrarNova ? 'text' : 'password'}
+                placeholder="Mín. 8 caracteres, com números e letra maiúscula"
+                value={novaSenha}
+                onChange={(event) => {
+                  setNovaSenha(event.target.value);
+                  setErro('');
+                  setSucesso('');
+                }}
+                autoComplete="new-password"
+                disabled={carregando || Boolean(sucesso)}
+                aria-invalid={Boolean(erro)}
+              />
+
+              <button
+                type="button"
+                className="reset-olho"
+                onClick={() => setMostrarNova((valor) => !valor)}
+                aria-label={mostrarNova ? 'Ocultar senha' : 'Mostrar senha'}
+                disabled={carregando || Boolean(sucesso)}
+              >
+                <IconeOlho aberto={mostrarNova} />
+              </button>
+            </div>
           </div>
 
           <div className="reset-campo">
@@ -167,32 +267,46 @@ export default function ResetPassword({
               Confirmar nova senha
             </label>
 
-            <input
-              id="reset-confirmar-senha"
-              type="password"
-              placeholder="Confirme sua nova senha"
-              value={confirmarSenha}
-              onChange={(event) => {
-                setConfirmarSenha(event.target.value);
-                setErro('');
-                setSucesso('');
-              }}
-              autoComplete="new-password"
-              disabled={carregando || Boolean(sucesso)}
-            />
+            <div className="reset-input-wrap">
+              <input
+                id="reset-confirmar-senha"
+                type={mostrarConfirmar ? 'text' : 'password'}
+                placeholder="Repita a nova senha"
+                value={confirmarSenha}
+                onChange={(event) => {
+                  setConfirmarSenha(event.target.value);
+                  setErro('');
+                  setSucesso('');
+                }}
+                autoComplete="new-password"
+                disabled={carregando || Boolean(sucesso)}
+              />
+
+              <button
+                type="button"
+                className="reset-olho"
+                onClick={() => setMostrarConfirmar((valor) => !valor)}
+                aria-label={
+                  mostrarConfirmar ? 'Ocultar confirmação' : 'Mostrar confirmação'
+                }
+                disabled={carregando || Boolean(sucesso)}
+              >
+                <IconeOlho aberto={mostrarConfirmar} />
+              </button>
+            </div>
           </div>
 
-          {carregando ? (
-            <MensagemEstado
-              tipo="carregando"
-              mensagem="Alterando sua senha..."
-            />
-          ) : formularioVazio && !erro && !sucesso ? (
-            <MensagemEstado
-              tipo="vazio"
-              mensagem="Preencha os campos para cadastrar uma nova senha."
-            />
-          ) : null}
+          <ul className="reset-regras" aria-label="Requisitos da senha">
+            {regras.map((regra) => (
+              <li
+                key={regra.texto}
+                className={regra.ok ? 'reset-regra ok' : 'reset-regra'}
+              >
+                <IconeRegra ok={regra.ok} />
+                {regra.texto}
+              </li>
+            ))}
+          </ul>
 
           <MensagemEstado tipo="erro" mensagem={erro} />
           <MensagemEstado tipo="sucesso" mensagem={sucesso} />
@@ -211,21 +325,10 @@ export default function ResetPassword({
               className="reset-botao"
               disabled={carregando}
             >
-              {carregando ? 'Alterando...' : 'Trocar senha'}
+              {carregando ? 'Salvando...' : 'Salvar nova senha'}
             </button>
           )}
         </form>
-
-        {!sucesso && (
-          <button
-            type="button"
-            className="reset-voltar"
-            onClick={voltarLogin}
-            disabled={carregando}
-          >
-            Voltar para o login
-          </button>
-        )}
       </section>
     </div>
   );

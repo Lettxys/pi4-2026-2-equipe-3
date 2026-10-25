@@ -6,6 +6,35 @@ const API_URL =
 
 const TOKEN_KEY = 'token';
 
+// Evento disparado quando o servidor recusa o token salvo (sessão vencida ou inválida)
+export const EVENTO_SESSAO_EXPIRADA = 'sessao-expirada';
+
+function lerToken(): string | null {
+  return (
+    localStorage.getItem(TOKEN_KEY) ??
+    sessionStorage.getItem(TOKEN_KEY)
+  );
+}
+
+function salvarToken(token: string, lembrar: boolean) {
+  limparToken();
+
+  if (lembrar) {
+    localStorage.setItem(TOKEN_KEY, token);
+  } else {
+    sessionStorage.setItem(TOKEN_KEY, token);
+  }
+}
+
+export function limparToken() {
+  localStorage.removeItem(TOKEN_KEY);
+  sessionStorage.removeItem(TOKEN_KEY);
+}
+
+export function temToken(): boolean {
+  return Boolean(lerToken());
+}
+
 export const api = axios.create({
   baseURL: API_URL,
 
@@ -17,7 +46,7 @@ export const api = axios.create({
 });
 
 api.interceptors.request.use((config) => {
-  const token = localStorage.getItem(TOKEN_KEY);
+  const token = lerToken();
 
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
@@ -39,6 +68,17 @@ api.interceptors.response.use(
       console.error('[API Error]: O backend não respondeu.');
     } else {
       console.error('[API Error]:', error.message);
+    }
+
+    // Token salvo foi recusado pelo servidor: limpa e avisa o app.
+    // O login com senha errada também responde 401, por isso é ignorado aqui.
+    if (
+      error.response?.status === 401 &&
+      lerToken() &&
+      error.config?.url !== ROTAS.login
+    ) {
+      limparToken();
+      window.dispatchEvent(new Event(EVENTO_SESSAO_EXPIRADA));
     }
 
     return Promise.reject(error);
@@ -150,10 +190,12 @@ export function extrairMensagemDeErro(error: unknown, padrao: string): string {
   return dados?.message ?? padrao;
 }
 
-export async function fazerLogin(dados: LoginData) {
+// lembrar = true  -> token em localStorage (continua logado ao fechar o navegador)
+// lembrar = false -> token em sessionStorage (sai ao fechar o navegador)
+export async function fazerLogin(dados: LoginData, lembrar = true) {
   const resposta = await api.post<LoginResponse>(ROTAS.login, dados);
 
-  localStorage.setItem(TOKEN_KEY, resposta.data.accessToken);
+  salvarToken(resposta.data.accessToken, lembrar);
 
   return resposta.data;
 }
@@ -209,6 +251,6 @@ export async function sair() {
   try {
     await api.post<MessageResponse>(ROTAS.sair);
   } finally {
-    localStorage.removeItem(TOKEN_KEY);
+    limparToken();
   }
 }

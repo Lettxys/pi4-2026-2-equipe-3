@@ -1,0 +1,136 @@
+/*
+  Tela "Documentos".
+  O cabeçalho e o menu lateral vêm do PainelLayout (estilos em Overview.css).
+
+  1 "ue" = 1px do frame de 1920px do Figma, escalado pela largura da janela
+  (somente no desktop). Em telas menores usa um tamanho fixo e legível.
+*/
+
+.documentos-content {
+  --ue: 0.95px;
+
+  box-sizing: border-box;
+  min-width: 0;
+  padding: 28px 20px 40px;
+
+  zoom: var(--escala-conteudo, 1);
+}
+
+.documentos-content h1 {
+  margin: 0;
+
+  color: #17335c;
+  font-size: calc(36 * var(--ue));
+  font-weight: 700;
+  letter-spacing: calc(-1 * var(--ue));
+  line-height: 1.15;
+}
+
+.documentos-subtitulo {
+  margin: calc(9 * var(--ue)) 0 0;
+
+  color: #2f5a8f;
+  font-size: calc(19 * var(--ue));
+  line-height: 1.5;
+}
+
+/* ---- Estado vazio ---- */
+
+.documentos-vazio {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+
+  margin-top: 60px;
+
+  text-align: center;
+}
+
+.documentos-vazio-icone {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  width: calc(111 * var(--ue));
+  height: calc(111 * var(--ue));
+
+  border-radius: 50%;
+  background: #e3f5f2;
+
+  color: #16a095;
+}
+
+.documentos-vazio-icone svg {
+  width: calc(48 * var(--ue));
+  height: calc(48 * var(--ue));
+}
+
+.documentos-vazio h2 {
+  margin: calc(24 * var(--ue)) 0 0;
+
+  color: #17335c;
+  font-size: calc(31 * var(--ue));
+  font-weight: 700;
+  line-height: 1.25;
+}
+
+.documentos-vazio p {
+  max-width: calc(480 * var(--ue));
+  margin: calc(10 * var(--ue)) 0 0;
+
+  color: #2f5a8f;
+  font-size: calc(18 * var(--ue));
+  line-height: 1.65;
+}
+
+.documentos-vazio button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: calc(10 * var(--ue));
+
+  height: calc(53 * var(--ue));
+  margin-top: calc(25 * var(--ue));
+  padding: 0 calc(26 * var(--ue));
+
+  border: none;
+  border-radius: calc(11 * var(--ue));
+
+  background: #16a095;
+  color: #fff;
+
+  font-family: inherit;
+  font-size: calc(15.5 * var(--ue));
+  font-weight: 500;
+
+  cursor: pointer;
+
+  transition: background 0.2s;
+}
+
+.documentos-vazio button:hover {
+  background: #11897f;
+}
+
+.documentos-vazio button svg {
+  width: calc(21 * var(--ue));
+  height: calc(21 * var(--ue));
+}
+
+/* ---- Desktop: escala pelo tamanho da janela, como o Figma ---- */
+
+@media (min-width: 1101px) {
+  .documentos-content {
+    --ue: clamp(0.7px, calc(100vw / 1920), 1.15px);
+
+    padding: calc(50 * var(--ue)) calc(80 * var(--ue)) calc(40 * var(--ue));
+  }
+
+  .documentos-content h1 {
+    font-size: calc(46 * var(--ue));
+  }
+
+  .documentos-vazio {
+    margin-top: calc(169 * var(--ue));
+  }
+}

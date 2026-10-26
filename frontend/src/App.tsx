@@ -9,6 +9,9 @@ import ForgotPassword from './pages/ForgotPassword';
 import VerificarCodigo from './pages/VerificarCodigo';
 import ResetPassword from './pages/ResetPassword';
 import Overview from './pages/Overview';
+import EtapaIdentificacao from './pages/EtapaIdentificacao';
+import Documentos from './pages/Documentos';
+import type { DestinoMenu } from './components/PainelLayout';
 import {
   EVENTO_SESSAO_EXPIRADA,
   buscarUsuarioLogado,
@@ -20,7 +23,9 @@ type Pagina =
   | 'landing'
   | 'calculadora'
   | 'quiz'
-  | 'overview';
+  | 'overview'
+  | 'etapa-identificacao'
+  | 'documentos';
 
 type Modal =
   | 'login'
@@ -31,7 +36,7 @@ type Modal =
   | null;
 
 function App() {
-  const [pagina, setPagina] = useState<Pagina>('landing');
+  const [pagina, setPagina] = useState<Pagina>('documentos');
   const [modal, setModal] = useState<Modal>(null);
   const [emailRecuperacao, setEmailRecuperacao] = useState('');
   const [tokenRedefinicao, setTokenRedefinicao] = useState('');
@@ -70,6 +75,11 @@ function App() {
     setPagina(destino);
     setModal(null);
     window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  // Menu lateral do painel: "Visão geral" e "Meu processo" abrem o Overview
+  function navegar(destino: DestinoMenu) {
+    irPara(destino === 'documentos' ? 'documentos' : 'overview');
   }
 
   async function deslogar() {
@@ -129,7 +139,30 @@ function App() {
         />
       )}
 
-      {pagina === 'overview' && <Overview aoSair={deslogar} />}
+      {pagina === 'overview' && (
+        <Overview
+          aoSair={deslogar}
+          aoComecarEtapa={() => irPara('etapa-identificacao')}
+          aoNavegar={navegar}
+        />
+      )}
+
+      {pagina === 'etapa-identificacao' && (
+        <EtapaIdentificacao
+          aoSair={deslogar}
+          voltarTrilha={() => irPara('overview')}
+          aoConcluir={() => irPara('overview')}
+          aoNavegar={navegar}
+        />
+      )}
+
+      {pagina === 'documentos' && (
+        <Documentos
+          aoSair={deslogar}
+          aoNavegar={navegar}
+          irParaEtapa={() => irPara('etapa-identificacao')}
+        />
+      )}
 
       {modal === 'login' && (
         <Login

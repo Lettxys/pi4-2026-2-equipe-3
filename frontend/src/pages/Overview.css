@@ -257,40 +257,56 @@ button {
 .overview-menu {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 5px;
 }
 
 .overview-menu button {
   display: flex;
   align-items: center;
-  gap: 16px;
-  min-height: 56px;
-  padding: 10px 16px;
+  gap: 14px;
+  width: 100%;
+  min-height: 52px;
+  padding: 8px 16px;
   border: 0;
   border-radius: 12px;
   background: transparent;
   color: var(--azul);
   text-align: left;
+  font-family: inherit;
   font-size: clamp(17px, 1.3vw, 26px);
   font-weight: 500;
-  cursor: default;
+  cursor: pointer;
 }
 
-.overview-menu button.active {
-  background: #e3f6f2;
-  color: var(--verde-escuro);
-  font-size: clamp(18px, 1.4vw, 28px);
-  font-weight: 600;
+.overview-menu button:hover {
+  background: #f0f8f7;
 }
 
 /* Subitens com linha vertical à esquerda */
-.overview-menu button:not(.active) {
+.overview-menu .menu-filhos {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
   margin-left: 30px;
-  min-height: 52px;
-  padding-left: 28px;
-  border-radius: 0;
-  border-left: 2px solid var(--borda);
+  margin-right: -10px;
+  padding-left: 16px;
+  border-left: 2px solid #dbede9;
+}
+
+.overview-menu .menu-filho {
+  width: auto;
+  min-height: 46px;
+  padding: 6px 14px;
+  gap: 12px;
+  border-radius: 11px;
   font-size: clamp(16px, 1.2vw, 24px);
+}
+
+/* Página atual */
+.overview-menu .menu-filho.ativo {
+  background: #e3f5f2;
+  color: var(--verde);
+  font-weight: 600;
 }
 
 .overview-profile {
@@ -1053,10 +1069,6 @@ button {
   font-size: 24px;
 }
 
-.overview-menu button.active .material-symbols-outlined {
-  font-variation-settings: "FILL" 1, "wght" 400, "GRAD" 0, "opsz" 24;
-}
-
 .overview-saved .material-symbols-outlined {
   flex-shrink: 0;
   color: var(--verde);
@@ -1108,19 +1120,23 @@ button {
     min-height: calc(100vh - var(--header-h));
   }
   .overview-sidebar { padding: calc(32 * var(--u)) calc(20 * var(--u)) calc(22 * var(--u)); }
-  .overview-menu { gap: calc(8 * var(--u)); }
-  .overview-menu button { min-height: calc(56 * var(--u)); padding: calc(8 * var(--u)) calc(16 * var(--u)); gap: calc(14 * var(--u)); font-size: calc(20 * var(--u)); border-radius: calc(12 * var(--u)); }
-  .overview-menu button.active { font-size: calc(20 * var(--u)); }
-  .overview-menu button:not(.active) {
-    min-height: calc(50 * var(--u));
+  .overview-menu { gap: calc(5 * var(--u)); }
+  .overview-menu button { min-height: calc(56 * var(--u)); padding: calc(8 * var(--u)) calc(16 * var(--u)); gap: calc(14 * var(--u)); font-size: calc(19.5 * var(--u)); border-radius: calc(12 * var(--u)); }
+  .overview-menu .menu-filhos {
+    gap: calc(7 * var(--u));
     margin-left: calc(30 * var(--u));
-    padding-left: calc(28 * var(--u));
+    margin-right: calc(-10 * var(--u));
+    padding-left: calc(16 * var(--u));
+  }
+  .overview-menu .menu-filho {
+    min-height: calc(46 * var(--u));
+    padding: calc(6 * var(--u)) calc(14 * var(--u));
     gap: calc(12 * var(--u));
     font-size: calc(17 * var(--u));
-    border-radius: 0;
+    border-radius: calc(11 * var(--u));
   }
   .overview-menu .material-symbols-outlined { font-size: calc(22 * var(--u)); }
-  .overview-menu button:not(.active) .material-symbols-outlined { font-size: calc(20 * var(--u)); }
+  .overview-menu .menu-filho .material-symbols-outlined { font-size: calc(20 * var(--u)); }
 
   .overview-profile { padding: calc(18 * var(--u)) calc(16 * var(--u)); border-radius: calc(12 * var(--u)); }
   .overview-profile-label { margin-bottom: calc(8 * var(--u)); font-size: calc(11 * var(--u)); letter-spacing: calc(1.8 * var(--u)); }

@@ -19,6 +19,10 @@ function extrairMensagemDeErro(error: unknown): string {
     const dados = error.response?.data as
       | { message?: string; details?: unknown[] }
       | undefined;
+    
+    if (error.response?.status === 401) {
+      return 'E-mail ou senha incorretos.';
+    }
 
     if (!dados) {
       return 'Não foi possível conectar ao servidor.';

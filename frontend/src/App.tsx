@@ -35,12 +35,26 @@ type Modal =
   | 'ResetPassword'
   | null;
 
+// Telas internas: só abrem com usuário autenticado.
+// As demais (landing, calculadora, quiz e os modais) são públicas.
+const PAGINAS_PROTEGIDAS: Pagina[] = [
+  'overview',
+  'etapa-identificacao',
+  'documentos',
+];
+
+function ehProtegida(pagina: Pagina): boolean {
+  return PAGINAS_PROTEGIDAS.includes(pagina);
+}
+
 function App() {
-  const [pagina, setPagina] = useState<Pagina>('documentos');
+  const [pagina, setPagina] = useState<Pagina>('landing');
   const [modal, setModal] = useState<Modal>(null);
   const [emailRecuperacao, setEmailRecuperacao] = useState('');
   const [tokenRedefinicao, setTokenRedefinicao] = useState('');
   const [verificandoSessao, setVerificandoSessao] = useState(temToken());
+  // Tela interna que a pessoa tentou abrir sem estar logada (volta para ela após o login)
+  const [destinoPendente, setDestinoPendente] = useState<Pagina | null>(null);
 
   // Ao abrir o app: se existe token salvo, confirma com o servidor e vai ao Overview
   useEffect(() => {
@@ -72,6 +86,14 @@ function App() {
   }, []);
 
   function irPara(destino: Pagina) {
+    // Guard: tela interna sem token abre o login e guarda o destino
+    if (ehProtegida(destino) && !temToken()) {
+      setDestinoPendente(destino);
+      setPagina('landing');
+      setModal('login');
+      return;
+    }
+
     setPagina(destino);
     setModal(null);
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -89,6 +111,7 @@ function App() {
       // O token é removido do localStorage mesmo se a requisição falhar
     }
 
+    setDestinoPendente(null);
     irPara('landing');
   }
 
@@ -106,8 +129,21 @@ function App() {
   function fecharModal() {
     setEmailRecuperacao('');
     setTokenRedefinicao('');
+    setDestinoPendente(null);
     setModal(null);
   }
+
+  // Login aceito: volta para a tela que a pessoa tentou abrir (ou Overview)
+  function aoEntrar() {
+    const destino = destinoPendente ?? 'overview';
+    setDestinoPendente(null);
+    irPara(destino);
+  }
+
+  // Segunda camada do guard: mesmo que o estado aponte para uma tela interna,
+  // sem token ela não é renderizada (ex.: token removido em outra aba)
+  const paginaAtual: Pagina =
+    ehProtegida(pagina) && !temToken() ? 'landing' : pagina;
 
   if (verificandoSessao) {
     return null;
@@ -115,7 +151,7 @@ function App() {
 
   return (
     <>
-      {pagina === 'landing' && (
+      {paginaAtual === 'landing' && (
         <Landing
           abrirLogin={() => setModal('login')}
           abrirRegistrar={() => setModal('registrar')}
@@ -124,7 +160,7 @@ function App() {
         />
       )}
 
-      {pagina === 'calculadora' && (
+      {paginaAtual === 'calculadora' && (
         <Calculadora
           voltarInicio={() => irPara('landing')}
           abrirLogin={() => setModal('login')}
@@ -132,14 +168,14 @@ function App() {
         />
       )}
 
-      {pagina === 'quiz' && (
+      {paginaAtual === 'quiz' && (
         <Quiz
           voltarInicio={() => irPara('landing')}
           abrirLogin={() => setModal('login')}
         />
       )}
 
-      {pagina === 'overview' && (
+      {paginaAtual === 'overview' && (
         <Overview
           aoSair={deslogar}
           aoComecarEtapa={() => irPara('etapa-identificacao')}
@@ -147,7 +183,7 @@ function App() {
         />
       )}
 
-      {pagina === 'etapa-identificacao' && (
+      {paginaAtual === 'etapa-identificacao' && (
         <EtapaIdentificacao
           aoSair={deslogar}
           voltarTrilha={() => irPara('overview')}
@@ -156,7 +192,7 @@ function App() {
         />
       )}
 
-      {pagina === 'documentos' && (
+      {paginaAtual === 'documentos' && (
         <Documentos
           aoSair={deslogar}
           aoNavegar={navegar}
@@ -169,7 +205,7 @@ function App() {
           fechar={fecharModal}
           abrirRegistrar={() => setModal('registrar')}
           abrirForgotPassword={() => setModal('ForgotPassword')}
-          aoEntrar={() => irPara('overview')}
+          aoEntrar={aoEntrar}
         />
       )}
 

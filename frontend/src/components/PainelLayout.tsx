@@ -2,6 +2,17 @@ import { Fragment, useEffect, useRef, useState } from 'react';
 import type { CSSProperties, ReactNode } from 'react';
 
 import '../pages/Overview.css';
+import EditarDados from '../pages/EditarDados';
+import type { DadosUsuario } from '../pages/EditarDados';
+import VerificarCodigo from '../pages/VerificarCodigo';
+import ResetPassword from '../pages/ResetPassword';
+import {
+  atualizarPerfil,
+  buscarUsuarioLogado,
+  esqueciSenha,
+  extrairMensagemDeErro,
+} from '../services/api';
+import type { MeResponse } from '../services/api';
 
 const ESCALAS_FONTE = [0.9, 1, 1.1, 1.2, 1.3];
 
@@ -9,13 +20,40 @@ export type DestinoMenu = 'visao-geral' | 'processo' | 'documentos';
 
 interface PainelLayoutProps {
   aoSair: () => void | Promise<void>;
-  // Chamado ao clicar em um item do menu lateral ou em "Visão geral" do menu da conta
   aoNavegar?: (destino: DestinoMenu) => void;
-  // Item do menu lateral que fica verde (página atual)
   itemAtivo?: 'processo' | 'documentos';
-  // Caminho depois de "Início" (ex.: ['Meu processo', 'Etapa 1 · Identificação'])
   caminho?: string[];
   children: ReactNode;
+}
+
+function formatarCpf(valor: string): string {
+  const digitos = valor.replace(/\D/g, '').slice(0, 11);
+  if (digitos.length <= 3) return digitos;
+  if (digitos.length <= 6) return `${digitos.slice(0, 3)}.${digitos.slice(3)}`;
+  if (digitos.length <= 9) {
+    return `${digitos.slice(0, 3)}.${digitos.slice(3, 6)}.${digitos.slice(6)}`;
+  }
+  return `${digitos.slice(0, 3)}.${digitos.slice(3, 6)}.${digitos.slice(6, 9)}-${digitos.slice(9)}`;
+}
+
+function formatarTelefone(valor: string): string {
+  const digitos = valor.replace(/\D/g, '').slice(0, 11);
+  if (digitos.length === 0) return '';
+  if (digitos.length <= 2) return `(${digitos}`;
+  if (digitos.length <= 6) return `(${digitos.slice(0, 2)}) ${digitos.slice(2)}`;
+  if (digitos.length <= 10) {
+    return `(${digitos.slice(0, 2)}) ${digitos.slice(2, 6)}-${digitos.slice(6)}`;
+  }
+  return `(${digitos.slice(0, 2)}) ${digitos.slice(2, 7)}-${digitos.slice(7)}`;
+}
+
+function converterUsuario(eu: MeResponse): DadosUsuario {
+  return {
+    nome: eu.fullName ?? '',
+    cpf: formatarCpf(eu.cpf ?? ''),
+    telefone: formatarTelefone(eu.phone ?? ''),
+    email: eu.email ?? '',
+  };
 }
 
 export default function PainelLayout({
@@ -27,7 +65,35 @@ export default function PainelLayout({
 }: PainelLayoutProps) {
   const [menuAberto, setMenuAberto] = useState(false);
   const [nivelFonte, setNivelFonte] = useState(1);
+  const [editando, setEditando] = useState(false);
+  const [etapaSenha, setEtapaSenha] = useState<'codigo' | 'nova' | null>(null);
+  const [tokenSenha, setTokenSenha] = useState('');
+  const [usuario, setUsuario] = useState<DadosUsuario | null>(null);
   const contaRef = useRef<HTMLDivElement>(null);
+
+  const iniciaisUsuario = (usuario?.nome ?? '')
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean)
+    .map((parte: string, i: number, partes: string[]) =>
+      i === 0 || i === partes.length - 1 ? parte[0] : ''
+    )
+    .join('')
+    .toUpperCase();
+
+  useEffect(() => {
+    let ativo = true;
+
+    buscarUsuarioLogado()
+      .then((eu) => {
+        if (ativo) setUsuario(converterUsuario(eu));
+      })
+      .catch(() => {});
+
+    return () => {
+      ativo = false;
+    };
+  }, []);
 
   useEffect(() => {
     if (!menuAberto) {
@@ -69,6 +135,45 @@ export default function PainelLayout({
   async function sairDaConta() {
     setMenuAberto(false);
     await aoSair();
+  }
+
+  function abrirEdicao() {
+    if (!usuario) return;
+    setMenuAberto(false);
+    setEditando(true);
+  }
+
+  async function salvarDados(dados: DadosUsuario) {
+    const resposta = await atualizarPerfil({
+      fullName: dados.nome,
+      email: dados.email,
+      phone: dados.telefone.replace(/\D/g, '') || null,
+    });
+
+    setUsuario(converterUsuario(resposta));
+    setEditando(false);
+  }
+
+  async function iniciarAlteracaoSenha() {
+    if (!usuario) return;
+
+    try {
+      await esqueciSenha(usuario.email);
+      setEditando(false);
+      setEtapaSenha('codigo');
+    } catch (error: unknown) {
+      window.alert(
+        extrairMensagemDeErro(
+          error,
+          'Não foi possível enviar o código. Tente novamente.'
+        )
+      );
+    }
+  }
+
+  function fecharFluxoSenha() {
+    setEtapaSenha(null);
+    setTokenSenha('');
   }
 
   return (
@@ -144,19 +249,20 @@ export default function PainelLayout({
               >
                 <div className="overview-conta-topo">
                   <span className="overview-conta-avatar" aria-hidden="true">
-                    MS
+                    {iniciaisUsuario}
                   </span>
 
                   <div className="overview-conta-dados">
-                    <strong>Maria Souza Lima</strong>
-                    <span>maria.souza@email.com</span>
+                    <strong>{usuario?.nome ?? ''}</strong>
+                    <span>{usuario?.email ?? ''}</span>
                   </div>
 
                   <button
                     type="button"
                     className="overview-conta-editar"
                     aria-label="Editar perfil"
-                    onClick={() => setMenuAberto(false)}
+                    disabled={!usuario}
+                    onClick={abrirEdicao}
                   >
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
                       <path d="M12 20H21" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" stroke="currentColor" />
@@ -241,6 +347,40 @@ export default function PainelLayout({
 
         {children}
       </div>
+
+      {usuario && (
+        <EditarDados
+          aberto={editando}
+          dadosIniciais={usuario}
+          aoFechar={() => setEditando(false)}
+          aoSalvar={salvarDados}
+          aoAlterarSenha={iniciarAlteracaoSenha}
+        />
+      )}
+
+      {usuario && etapaSenha === 'codigo' && (
+        <VerificarCodigo
+          email={usuario.email}
+          textoVoltar="Voltar aos meus dados"
+          onVoltar={() => {
+            setEtapaSenha(null);
+            setEditando(true);
+          }}
+          onFechar={fecharFluxoSenha}
+          onVerificado={(token) => {
+            setTokenSenha(token);
+            setEtapaSenha('nova');
+          }}
+        />
+      )}
+
+      {etapaSenha === 'nova' && (
+        <ResetPassword
+          token={tokenSenha}
+          fechar={fecharFluxoSenha}
+          voltarLogin={fecharFluxoSenha}
+        />
+      )}
     </div>
   );
 }

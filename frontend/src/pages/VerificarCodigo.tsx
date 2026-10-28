@@ -12,6 +12,7 @@ import { esqueciSenha, extrairMensagemDeErro, verificarCodigo } from '../service
 
 interface VerificarCodigoProps {
   email: string;
+  textoVoltar?: string;
   onVoltar: () => void;
   onFechar: () => void;
   onVerificado: (resetToken: string) => void;
@@ -36,6 +37,7 @@ function formatarTempo(segundos: number): string {
 
 export default function VerificarCodigo({
   email,
+  textoVoltar = 'Usar outro e-mail',
   onVoltar,
   onFechar,
   onVerificado,
@@ -50,12 +52,10 @@ export default function VerificarCodigo({
 
   const caixas = useRef<(HTMLInputElement | null)[]>([]);
 
-  // Foco na primeira caixa ao abrir
   useEffect(() => {
     caixas.current[0]?.focus();
   }, []);
 
-  // Contagem regressiva para liberar o reenvio
   useEffect(() => {
     if (segundos <= 0) {
       return;
@@ -104,7 +104,6 @@ export default function VerificarCodigo({
       return;
     }
 
-    // Caixa já preenchida: usa só o caractere que a pessoa acabou de digitar
     const digitado = (event.nativeEvent as InputEvent).data;
     const texto =
       digitos[indice] && valor.length === 2 && digitado && digitado.length === 1
@@ -236,7 +235,7 @@ export default function VerificarCodigo({
               strokeLinejoin="round"
             />
           </svg>
-          Usar outro e-mail
+          {textoVoltar}
         </button>
 
         <button

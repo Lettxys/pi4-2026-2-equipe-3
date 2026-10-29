@@ -69,3 +69,24 @@ public sealed record ListDriversResponse(
     int RegisteredDriversCount,
     int MaxAllowedDrivers,
     IReadOnlyList<DriverResponse> Drivers);
+
+public sealed record StepGuidanceResponse(
+    short StepNumber,
+    string Title,
+    Orgao? Agency,
+    string SimplifiedExplanation,
+    IReadOnlyList<string> ActionSteps,
+    string? Notice);
+
+public sealed record StepValidationError(
+    string Code,
+    string? Field,
+    long? DocumentId,
+    string Message);
+
+public sealed record StepValidationResponse(
+    short Step,
+    bool IsValidated,
+    short? NextStep,
+    StatusProcesso ProcessStatus,
+    IReadOnlyList<StepValidationError> ValidationErrors);

@@ -14,8 +14,8 @@ import './Overview.css';
 
 interface OverviewProps {
   aoSair: () => void | Promise<void>;
-  // Chamado ao clicar em "Começar" na etapa atual
-  aoComecarEtapa?: () => void;
+  // Chamado ao clicar em "Começar" na etapa atual (numero, titulo)
+  aoComecarEtapa?: (numero: string, titulo: string) => void;
   aoNavegar?: (destino: DestinoMenu) => void;
 }
 
@@ -407,7 +407,11 @@ export default function Overview({
                 </div>
 
                 {etapa.atual ? (
-                  <button type="button" className="overview-start" onClick={aoComecarEtapa}>
+                  <button
+                    type="button"
+                    className="overview-start"
+                    onClick={() => aoComecarEtapa?.(etapa.numero, etapa.titulo)}
+                  >
                     Começar <span>→</span>
                   </button>
                 ) : (

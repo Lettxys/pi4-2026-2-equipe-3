@@ -10,6 +10,7 @@ import VerificarCodigo from './pages/VerificarCodigo';
 import ResetPassword from './pages/ResetPassword';
 import Overview from './pages/Overview';
 import EtapaIdentificacao from './pages/EtapaIdentificacao';
+import EtapaRenda from './pages/EtapaRenda';
 import Documentos from './pages/Documentos';
 import type { DestinoMenu } from './components/PainelLayout';
 import {
@@ -25,6 +26,7 @@ type Pagina =
   | 'quiz'
   | 'overview'
   | 'etapa-identificacao'
+  | 'etapa-renda'
   | 'documentos';
 
 type Modal =
@@ -40,6 +42,7 @@ type Modal =
 const PAGINAS_PROTEGIDAS: Pagina[] = [
   'overview',
   'etapa-identificacao',
+  'etapa-renda',
   'documentos',
 ];
 
@@ -178,13 +181,26 @@ function App() {
       {paginaAtual === 'overview' && (
         <Overview
           aoSair={deslogar}
-          aoComecarEtapa={() => irPara('etapa-identificacao')}
+          aoComecarEtapa={(numero, titulo) =>
+            titulo?.includes('Renda') || numero === '4'
+              ? irPara('etapa-renda')
+              : irPara('etapa-identificacao')
+          }
           aoNavegar={navegar}
         />
       )}
 
       {paginaAtual === 'etapa-identificacao' && (
         <EtapaIdentificacao
+          aoSair={deslogar}
+          voltarTrilha={() => irPara('overview')}
+          aoConcluir={() => irPara('overview')}
+          aoNavegar={navegar}
+        />
+      )}
+
+      {paginaAtual === 'etapa-renda' && (
+        <EtapaRenda
           aoSair={deslogar}
           voltarTrilha={() => irPara('overview')}
           aoConcluir={() => irPara('overview')}

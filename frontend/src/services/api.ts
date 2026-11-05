@@ -215,6 +215,44 @@ export async function buscarUsuarioLogado() {
   return resposta.data;
 }
 
+export type PerfilProcesso = 'PCD_DRIVER' | 'PCD_NON_DRIVER';
+
+export interface ProcessProgressResponse {
+  processId: number;
+  profileType: PerfilProcesso;
+  fullName: string;
+  currentStep: number;
+  status: string;
+  progressPercentage: number;
+  updatedAt: string;
+}
+
+export interface DocumentChecklistItemResponse {
+  documentType: string;
+  authorizedDriverId: number | null;
+  isRequired: boolean;
+  isUploaded: boolean;
+  status: string | null;
+  expirationDate: string | null;
+  alert: string | null;
+}
+
+export async function buscarProgressoProcesso(processId: number) {
+  const resposta = await api.get<ProcessProgressResponse>(
+    `/api/processes/${processId}`
+  );
+
+  return resposta.data;
+}
+
+export async function buscarChecklistDocumentos(processId: number) {
+  const resposta = await api.get<DocumentChecklistItemResponse[]>(
+    `/api/processes/${processId}/documents/checklist`
+  );
+
+  return resposta.data;
+}
+
 export async function atualizarPerfil(dados: AtualizarPerfilData) {
   const resposta = await api.patch<MeResponse>(ROTAS.atualizarPerfil, dados);
 

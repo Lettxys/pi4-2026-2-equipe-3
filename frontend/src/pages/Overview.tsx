@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react';
 import PainelLayout from '../components/PainelLayout';
 import type { DestinoMenu } from '../components/PainelLayout';
 
@@ -130,191 +131,272 @@ const etapas = [
   },
 ];
 
+interface RespostasQuiz {
+  situacao?: string;
+  categoria?: string;
+  isencao?: string;
+}
+
+function lerRespostasQuiz(): RespostasQuiz {
+  try {
+    return JSON.parse(localStorage.getItem('respostasQuiz') || '{}');
+  } catch {
+    return {};
+  }
+}
+
+function obterEtapas(respostas: RespostasQuiz) {
+  const precisaDeCondutores =
+    respostas.situacao === 'pcd-nao-condutor' ||
+    respostas.situacao === 'responsavel';
+
+  return etapas
+    .filter(
+      (etapa) =>
+        etapa.titulo !== 'Condutores autorizados' ||
+        precisaDeCondutores
+    )
+    .map((etapa, index) => ({
+      ...etapa,
+      numero: String(index + 1),
+    }));
+}
+
+const categorias: Record<string, string> = {
+  fisica: 'Deficiência física',
+  visual: 'Deficiência visual',
+  auditiva: 'Deficiência auditiva',
+  intelectual: 'Deficiência intelectual',
+  autismo: 'Autismo',
+  'nao-tenho-certeza': 'Deficiência a confirmar',
+};
+
 export default function Overview({
   aoSair,
   aoComecarEtapa,
   aoNavegar,
 }: OverviewProps) {
+  const [respostas, setRespostas] = useState<RespostasQuiz>(lerRespostasQuiz);
+
+  useEffect(() => {
+    function atualizarRespostas() {
+      setRespostas(lerRespostasQuiz());
+    }
+
+    window.addEventListener('storage', atualizarRespostas);
+    window.addEventListener('respostasQuizAtualizadas', atualizarRespostas);
+
+    return () => {
+      window.removeEventListener('storage', atualizarRespostas);
+      window.removeEventListener('respostasQuizAtualizadas', atualizarRespostas);
+    };
+  }, []);
+
+  const etapasVisiveis = obterEtapas(respostas);
+
+  const perfil =
+    respostas.situacao === 'pcd-condutor'
+      ? 'PcD condutor'
+      : respostas.situacao === 'responsavel'
+        ? 'Responsável'
+        : 'PcD não condutor';
+
+  const categoria = respostas.categoria
+    ? categorias[respostas.categoria] || 'Perfil personalizado'
+    : 'Perfil personalizado';
+
+  const precisaDeCondutores =
+    respostas.situacao === 'pcd-nao-condutor' ||
+    respostas.situacao === 'responsavel';
+
   return (
     <PainelLayout aoSair={aoSair} aoNavegar={aoNavegar} itemAtivo="processo">
-        <main className="overview-content">
-          <section className="overview-main">
-            <div className="overview-intro">
-              <h1>
-                Vamos organizar sua
-                <span> documentação</span>
-              </h1>
+      <main className="overview-content">
+        <section className="overview-main">
+          <div className="overview-intro">
+            <h1>
+              Vamos organizar sua
+              <span> documentação</span>
+            </h1>
 
-              <p>
-                Siga as etapas no seu ritmo. Cada etapa concluída libera a próxima.
-              </p>
+            <p>
+              Siga as etapas no seu ritmo. Cada etapa concluída libera a próxima.
+            </p>
 
-              <div className="overview-tags">
-                <span>Montado para você:</span>
-                <b>PcD não condutor</b>
-                <b>Deficiência auditiva</b>
-                <b>2 condutores</b>
-                <b>Laudo recente</b>
+            <div className="overview-tags">
+              <span>Montado para você:</span>
+              <b>{perfil}</b>
+              <b>{categoria}</b>
+              {precisaDeCondutores && <b>Condutores autorizados</b>}
+              {respostas.isencao && (
+                <b>
+                  {respostas.isencao === 'sim'
+                    ? 'Já possui isenção'
+                    : respostas.isencao === 'sim-perdi'
+                      ? 'Isenção anterior perdida'
+                      : 'Primeira solicitação'}
+                </b>
+              )}
+            </div>
+          </div>
+
+          <section className="overview-progress">
+            <div className="overview-progress-icon">
+              <svg width="18" height="25" viewBox="0 0 18 25" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M0.909973 23.31V11.41M0.909973 11.41V1.61003M0.909973 11.41H16.31L12.81 6.51003L16.31 1.61003H0.909973M0.909973 1.61003V0.910034" strokeWidth="1.82" strokeLinecap="round" strokeLinejoin="round" stroke="#16A095" />
+              </svg>
+            </div>
+
+            <div className="overview-progress-info">
+              <strong>Seu progresso</strong>
+              <span>0 de {etapasVisiveis.length} etapas concluídas</span>
+            </div>
+
+            <div
+              className="overview-progress-bar"
+              role="progressbar"
+              aria-label="Progresso do processo"
+              aria-valuenow={0}
+              aria-valuemin={0}
+              aria-valuemax={100}
+            >
+              <span />
+            </div>
+
+            <strong className="overview-progress-percent">0%</strong>
+          </section>
+
+          <section className="overview-steps">
+            {etapasVisiveis.map((etapa) => (
+              <article
+                key={etapa.numero}
+                className={`overview-step ${
+                  etapa.atual ? 'overview-step-current' : ''
+                }`}
+              >
+                <div className="overview-step-icon">{etapa.icone}</div>
+
+                <span className="overview-step-number">{etapa.numero}</span>
+
+                <div className="overview-step-info">
+                  <h2>{etapa.titulo}</h2>
+                  <ul>
+                    {etapa.documentos.map((documento) => (
+                      <li key={documento}>{documento}</li>
+                    ))}
+                  </ul>
+                </div>
+
+                {etapa.atual ? (
+                  <button type="button" className="overview-start" onClick={aoComecarEtapa}>
+                    Começar <span>→</span>
+                  </button>
+                ) : (
+                  <span className="overview-lock" aria-label="Bloqueado">
+                    <svg width="18" height="21" viewBox="0 0 18 21" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M4 8H1V20H17V8H14M4 8H14M4 8V4C4 0 14 0 14 4V8" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" stroke="#7D8FA6" />
+                    </svg>
+                  </span>
+                )}
+              </article>
+            ))}
+          </section>
+
+          <p className="overview-saved">
+            <span className="material-symbols-outlined">save</span>
+            <span>
+              Seu progresso é salvo automaticamente. Você pode sair e
+              continuar depois de onde parou.
+            </span>
+          </p>
+        </section>
+
+        <aside className="overview-right">
+          <section className="overview-how">
+            <h2>Como funciona?</h2>
+
+            <div className="overview-explanation">
+              <span>
+                <svg width="25" height="25" viewBox="0 0 25 25" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M6.51003 12.1099L10.71 16.3099L18.41 7.90991M0.910034 12.1099C0.910034 5.92415 5.92427 0.909912 12.11 0.909912C18.2958 0.909912 23.31 5.92415 23.31 12.1099C23.31 18.2957 18.2958 23.3099 12.11 23.3099C5.92427 23.3099 0.910034 18.2957 0.910034 12.1099Z" strokeWidth="1.82" strokeLinecap="round" strokeLinejoin="round" stroke="#16A095" />
+                </svg>
+              </span>
+              <div>
+                <strong>Complete cada etapa</strong>
+                <p>
+                  Envie os documentos pedidos. Cada etapa concluída libera a próxima.
+                </p>
               </div>
             </div>
 
-            <section className="overview-progress">
-              <div className="overview-progress-icon">
-                <svg width="18" height="25" viewBox="0 0 18 25" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M0.909973 23.31V11.41M0.909973 11.41V1.61003M0.909973 11.41H16.31L12.81 6.51003L16.31 1.61003H0.909973M0.909973 1.61003V0.910034" strokeWidth="1.82" strokeLinecap="round" strokeLinejoin="round" stroke="#16A095" />
-                </svg>
-              </div>
-
-              <div className="overview-progress-info">
-                <strong>Seu progresso</strong>
-                <span>0 de 6 etapas concluídas</span>
-              </div>
-
-              <div
-                className="overview-progress-bar"
-                role="progressbar"
-                aria-label="Progresso do processo"
-                aria-valuenow={0}
-                aria-valuemin={0}
-                aria-valuemax={100}
-              >
-                <span />
-              </div>
-
-              <strong className="overview-progress-percent">0%</strong>
-            </section>
-
-            <section className="overview-steps">
-              {etapas.map((etapa) => (
-                <article
-                  key={etapa.numero}
-                  className={`overview-step ${
-                    etapa.atual ? 'overview-step-current' : ''
-                  }`}
-                >
-                  <div className="overview-step-icon">{etapa.icone}</div>
-
-                  <span className="overview-step-number">{etapa.numero}</span>
-
-                  <div className="overview-step-info">
-                    <h2>{etapa.titulo}</h2>
-                    <ul>
-                      {etapa.documentos.map((documento) => (
-                        <li key={documento}>{documento}</li>
-                      ))}
-                    </ul>
-                  </div>
-
-                  {etapa.atual ? (
-                    <button type="button" className="overview-start" onClick={aoComecarEtapa}>
-                      Começar <span>→</span>
-                    </button>
-                  ) : (
-                    <span className="overview-lock" aria-label="Bloqueado">
-                      <svg width="18" height="21" viewBox="0 0 18 21" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M4 8H1V20H17V8H14M4 8H14M4 8V4C4 0 14 0 14 4V8" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" stroke="#7D8FA6" />
-                      </svg>
-                    </span>
-                  )}
-                </article>
-              ))}
-            </section>
-
-            <p className="overview-saved">
-              <span className="material-symbols-outlined">save</span>
+            <div className="overview-explanation">
               <span>
-                Seu progresso é salvo automaticamente. Você pode sair e
-                continuar depois de onde parou.
+                <svg width="20" height="26" viewBox="0 0 20 26" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M18.41 6.50991L12.81 0.909912H0.910034V24.7099H18.41V6.50991ZM12.81 0.909912V6.50991H18.41M5.11003 14.2099L7.91003 17.0099L14.21 10.7099" strokeWidth="1.82" strokeLinecap="round" strokeLinejoin="round" stroke="#16A095" />
+                </svg>
               </span>
-            </p>
+              <div>
+                <strong>Confira antes de avançar</strong>
+                <p>
+                  Validamos datas e campos para evitar o indeferimento por erro simples.
+                </p>
+              </div>
+            </div>
+
+            <div className="overview-explanation">
+              <span>
+                <svg width="22" height="26" viewBox="0 0 22 26" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M5.81003 12.81L9.31003 16.31L15.61 9.31003M10.71 0.910034L20.51 5.11003V12.11C20.51 18.41 16.31 22.61 10.71 24.71C5.11003 22.61 0.910034 18.41 0.910034 12.11V5.11003L10.71 0.910034Z" strokeWidth="1.82" strokeLinecap="round" strokeLinejoin="round" stroke="#16A095" />
+                </svg>
+              </span>
+              <div>
+                <strong>Envie pelo SISEN</strong>
+                <p>
+                  No fim, você recebe o dossiê pronto e o guia para enviar à Receita Federal.
+                </p>
+              </div>
+            </div>
+
+            <div className="overview-illustration">
+              <picture>
+                <source srcSet="/mulher-com-prancheta.webp" type="image/webp" />
+                <img
+                  src="/mulher-com-prancheta.png"
+                  alt="Mulher cadeirante com prancheta conferindo a documentação do processo de isenção"
+                  width={1315}
+                  height={1197}
+                  loading="lazy"
+                  decoding="async"
+                />
+              </picture>
+            </div>
           </section>
 
-          <aside className="overview-right">
-            <section className="overview-how">
-              <h2>Como funciona?</h2>
+          <section className="overview-deadlines">
+            <h2>Prazos importantes</h2>
 
-              <div className="overview-explanation">
-                <span>
-                  <svg width="25" height="25" viewBox="0 0 25 25" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M6.51003 12.1099L10.71 16.3099L18.41 7.90991M0.910034 12.1099C0.910034 5.92415 5.92427 0.909912 12.11 0.909912C18.2958 0.909912 23.31 5.92415 23.31 12.1099C23.31 18.2957 18.2958 23.3099 12.11 23.3099C5.92427 23.3099 0.910034 18.2957 0.910034 12.1099Z" strokeWidth="1.82" strokeLinecap="round" strokeLinejoin="round" stroke="#16A095" />
-                  </svg>
-                </span>
-                <div>
-                  <strong>Complete cada etapa</strong>
-                  <p>
-                    Envie os documentos pedidos. Cada etapa concluída libera a próxima.
-                  </p>
-                </div>
-              </div>
+            <div>
+              <b>~5 dias úteis</b>
+              <span>Análise padrão da Receita Federal</span>
+            </div>
 
-              <div className="overview-explanation">
-                <span>
-                  <svg width="20" height="26" viewBox="0 0 20 26" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M18.41 6.50991L12.81 0.909912H0.910034V24.7099H18.41V6.50991ZM12.81 0.909912V6.50991H18.41M5.11003 14.2099L7.91003 17.0099L14.21 10.7099" strokeWidth="1.82" strokeLinecap="round" strokeLinejoin="round" stroke="#16A095" />
-                  </svg>
-                </span>
-                <div>
-                  <strong>Confira antes de avançar</strong>
-                  <p>
-                    Validamos datas e campos para evitar o indeferimento por erro simples.
-                  </p>
-                </div>
-              </div>
+            <div>
+              <b>30 dias</b>
+              <span>Para responder se a Receita pedir mais documentos</span>
+            </div>
 
-              <div className="overview-explanation">
-                <span>
-                  <svg width="22" height="26" viewBox="0 0 22 26" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M5.81003 12.81L9.31003 16.31L15.61 9.31003M10.71 0.910034L20.51 5.11003V12.11C20.51 18.41 16.31 22.61 10.71 24.71C5.11003 22.61 0.910034 18.41 0.910034 12.11V5.11003L10.71 0.910034Z" strokeWidth="1.82" strokeLinecap="round" strokeLinejoin="round" stroke="#16A095" />
-                  </svg>
-                </span>
-                <div>
-                  <strong>Envie pelo SISEN</strong>
-                  <p>
-                    No fim, você recebe o dossiê pronto e o guia para enviar à Receita Federal.
-                  </p>
-                </div>
-              </div>
+            <div>
+              <b>270 dias</b>
+              <span>Validade da autorização para comprar o veículo</span>
+            </div>
 
-              <div className="overview-illustration">
-                <picture>
-                  <source srcSet="/mulher-com-prancheta.webp" type="image/webp" />
-                  <img
-                    src="/mulher-com-prancheta.png"
-                    alt="Mulher cadeirante com prancheta conferindo a documentação do processo de isenção"
-                    width={1315}
-                    height={1197}
-                    loading="lazy"
-                    decoding="async"
-                  />
-                </picture>
-              </div>
-            </section>
-
-            <section className="overview-deadlines">
-              <h2>Prazos importantes</h2>
-
-              <div>
-                <b>~5 dias úteis</b>
-                <span>Análise padrão da Receita Federal</span>
-              </div>
-
-              <div>
-                <b>30 dias</b>
-                <span>Para responder se a Receita pedir mais documentos</span>
-              </div>
-
-              <div>
-                <b>270 dias</b>
-                <span>Validade da autorização para comprar o veículo</span>
-              </div>
-
-              <div>
-                <b>5 anos</b>
-                <span>Prazo para usar a isenção de novo</span>
-              </div>
-            </section>
-          </aside>
-        </main>
+            <div>
+              <b>5 anos</b>
+              <span>Prazo para usar a isenção de novo</span>
+            </div>
+          </section>
+        </aside>
+      </main>
     </PainelLayout>
   );
 }

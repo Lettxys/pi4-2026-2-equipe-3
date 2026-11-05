@@ -5,11 +5,14 @@ import PainelLayout from '../components/PainelLayout';
 import type { DestinoMenu } from '../components/PainelLayout';
 
 import './EtapaIdentificacao.css';
+import './EtapaConcluida.css';
 
 interface EtapaIdentificacaoProps {
   aoSair: () => void | Promise<void>;
   voltarTrilha: () => void;
   aoConcluir?: () => void;
+  // Chamado por "Começar etapa 2" no modal. Se não for informado, leva à trilha.
+  aoComecarEtapa2?: () => void;
   aoNavegar?: (destino: DestinoMenu) => void;
 }
 
@@ -116,6 +119,20 @@ function IconeCheckCirculo() {
   );
 }
 
+function IconeCheckGrande() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path
+        d="m5 12.5 4.5 4.5L19 7.5"
+        stroke="currentColor"
+        strokeWidth="2.4"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
 function IconeAlerta() {
   return (
     <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
@@ -196,6 +213,20 @@ function IconeSeta() {
   );
 }
 
+function IconeSetaDireita() {
+  return (
+    <svg viewBox="0 0 16 16" fill="none" aria-hidden="true">
+      <path
+        d="M2 8h12M9 3l5 5-5 5"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
 function IconeCheckPequeno() {
   return (
     <svg viewBox="0 0 16 16" fill="none" aria-hidden="true">
@@ -214,15 +245,18 @@ export default function EtapaIdentificacao({
   aoSair,
   voltarTrilha,
   aoConcluir,
+  aoComecarEtapa2,
   aoNavegar,
 }: EtapaIdentificacaoProps) {
   const [documentos, setDocumentos] = useState<Documento[]>(DOCUMENTOS_INICIAIS);
   const [arrastando, setArrastando] = useState('');
   const [aviso, setAviso] = useState('');
+  const [etapaConcluida, setEtapaConcluida] = useState(false);
 
   const seletores = useRef<Record<string, HTMLInputElement | null>>({});
   const temporizadores = useRef<Record<string, number>>({});
   const temporizadorAviso = useRef<number>(0);
+  const botaoEtapa2 = useRef<HTMLButtonElement | null>(null);
 
   // Limpa os envios em andamento ao sair da tela
   useEffect(() => {
@@ -233,6 +267,27 @@ export default function EtapaIdentificacao({
       window.clearTimeout(temporizadorAviso.current);
     };
   }, []);
+
+  // Modal de etapa concluída: foco no botão principal e fechamento com Esc
+  useEffect(() => {
+    if (!etapaConcluida) {
+      return;
+    }
+
+    botaoEtapa2.current?.focus();
+
+    function aoTeclar(event: KeyboardEvent) {
+      if (event.key === 'Escape') {
+        setEtapaConcluida(false);
+      }
+    }
+
+    window.addEventListener('keydown', aoTeclar);
+
+    return () => {
+      window.removeEventListener('keydown', aoTeclar);
+    };
+  }, [etapaConcluida]);
 
   const conferidos = documentos.filter((doc) => doc.status === 'conferido').length;
   const total = documentos.length;
@@ -369,6 +424,25 @@ export default function EtapaIdentificacao({
 
     const endereco = URL.createObjectURL(arquivo);
     window.open(endereco, '_blank', 'noopener');
+  }
+
+  // "Concluir etapa" abre o modal de etapa concluída (só com todos conferidos)
+  function concluirEtapa() {
+    if (faltam > 0) {
+      return;
+    }
+
+    setEtapaConcluida(true);
+  }
+
+  function irParaTrilha() {
+    setEtapaConcluida(false);
+    (aoConcluir ?? voltarTrilha)();
+  }
+
+  function comecarEtapa2() {
+    setEtapaConcluida(false);
+    (aoComecarEtapa2 ?? aoConcluir ?? voltarTrilha)();
   }
 
   const textoStatus: Record<StatusDocumento, string> = {
@@ -625,7 +699,7 @@ export default function EtapaIdentificacao({
               type="button"
               className="etapa-concluir-botao"
               disabled={faltam > 0}
-              onClick={aoConcluir}
+              onClick={concluirEtapa}
             >
               {faltam > 0 && <IconeCadeado />}
               Concluir etapa {NUMERO_ETAPA}
@@ -648,6 +722,73 @@ export default function EtapaIdentificacao({
           </section>
         </aside>
       </main>
+
+      {etapaConcluida && (
+        <div
+          className="etapa-concluida-overlay"
+          onClick={() => setEtapaConcluida(false)}
+        >
+          <section
+            className="etapa-concluida-modal"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="etapa-concluida-titulo"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <span className="etapa-concluida-icone">
+              <IconeCheckGrande />
+            </span>
+
+            <h2 id="etapa-concluida-titulo">
+              Etapa {NUMERO_ETAPA} concluída!
+            </h2>
+
+            <p className="etapa-concluida-texto">
+              Seus documentos pessoais foram conferidos.
+              <br />
+              <strong>
+                Etapa {NUMERO_ETAPA + 1} · Documentos médicos
+              </strong>{' '}
+              liberada.
+            </p>
+
+            <div className="etapa-concluida-passos" aria-hidden="true">
+              {Array.from({ length: TOTAL_ETAPAS }, (_, indice) => (
+                <span
+                  key={indice}
+                  className={
+                    indice < NUMERO_ETAPA
+                      ? 'ativo'
+                      : indice === NUMERO_ETAPA
+                        ? 'proxima'
+                        : ''
+                  }
+                />
+              ))}
+            </div>
+
+            <div className="etapa-concluida-acoes">
+              <button
+                ref={botaoEtapa2}
+                type="button"
+                className="etapa-concluida-primario"
+                onClick={comecarEtapa2}
+              >
+                Começar etapa {NUMERO_ETAPA + 1}
+                <IconeSetaDireita />
+              </button>
+
+              <button
+                type="button"
+                className="etapa-concluida-secundario"
+                onClick={irParaTrilha}
+              >
+                Voltar à trilha
+              </button>
+            </div>
+          </section>
+        </div>
+      )}
     </PainelLayout>
   );
 }

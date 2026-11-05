@@ -6,7 +6,6 @@ const API_URL =
 
 const TOKEN_KEY = 'token';
 
-// Evento disparado quando o servidor recusa o token salvo (sessão vencida ou inválida)
 export const EVENTO_SESSAO_EXPIRADA = 'sessao-expirada';
 
 function lerToken(): string | null {
@@ -70,8 +69,6 @@ api.interceptors.response.use(
       console.error('[API Error]:', error.message);
     }
 
-    // Token salvo foi recusado pelo servidor: limpa e avisa o app.
-    // O login com senha errada também responde 401, por isso é ignorado aqui.
     if (
       error.response?.status === 401 &&
       lerToken() &&
@@ -91,6 +88,7 @@ export const ROTAS = {
   registrar: `${AUTH}/register`,
   login: `${AUTH}/login`,
   eu: `${AUTH}/me`,
+  atualizarPerfil: `${AUTH}/me`,
   esqueciSenha: `${AUTH}/forgot-password`,
   verificarCodigo: `${AUTH}/verify-code`,
   redefinirSenha: `${AUTH}/reset-password`,
@@ -136,8 +134,15 @@ export interface MeResponse {
   fullName: string;
   cpf: string | null;
   email: string | null;
+  phone: string | null;
   profileType: TipoPerfil | null;
   activeProcessId: number | null;
+}
+
+export interface AtualizarPerfilData {
+  fullName: string;
+  email: string;
+  phone: string | null;
 }
 
 export interface VerificarCodigoData {
@@ -190,8 +195,6 @@ export function extrairMensagemDeErro(error: unknown, padrao: string): string {
   return dados?.message ?? padrao;
 }
 
-// lembrar = true  -> token em localStorage (continua logado ao fechar o navegador)
-// lembrar = false -> token em sessionStorage (sai ao fechar o navegador)
 export async function fazerLogin(dados: LoginData, lembrar = true) {
   const resposta = await api.post<LoginResponse>(ROTAS.login, dados);
 
@@ -208,6 +211,12 @@ export async function registrarUsuario(dados: RegistrarData) {
 
 export async function buscarUsuarioLogado() {
   const resposta = await api.get<MeResponse>(ROTAS.eu);
+
+  return resposta.data;
+}
+
+export async function atualizarPerfil(dados: AtualizarPerfilData) {
+  const resposta = await api.patch<MeResponse>(ROTAS.atualizarPerfil, dados);
 
   return resposta.data;
 }

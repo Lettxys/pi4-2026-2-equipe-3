@@ -1,13 +1,21 @@
 import { useEffect, useState } from 'react';
 import PainelLayout from '../components/PainelLayout';
 import type { DestinoMenu } from '../components/PainelLayout';
+import {
+  buscarChecklistDocumentos,
+  buscarProgressoProcesso,
+  buscarUsuarioLogado,
+  temToken,
+  type DocumentChecklistItemResponse,
+  type ProcessProgressResponse,
+} from '../services/api';
 
 import './Overview.css';
 
 interface OverviewProps {
   aoSair: () => void | Promise<void>;
-  // Chamado ao clicar em "Começar" na etapa atual
-  aoComecarEtapa?: () => void;
+  // Chamado ao clicar em "Começar" na etapa atual (numero, titulo)
+  aoComecarEtapa?: (numero: string, titulo: string) => void;
   aoNavegar?: (destino: DestinoMenu) => void;
 }
 
@@ -145,10 +153,64 @@ function lerRespostasQuiz(): RespostasQuiz {
   }
 }
 
-function obterEtapas(respostas: RespostasQuiz) {
+// Nomes amigáveis (seed do backend) para os DocumentType do checklist.
+const rotulosDocumentos: Record<string, string> = {
+  ID_CARD: 'RG ou CIN',
+  CPF: 'CPF',
+  PROOF_OF_ADDRESS: 'Comprovante de residência',
+  MEDICAL_REPORT_IPI: 'Laudo médico para o IPI',
+  MEDICAL_REPORT_ICMS: 'Laudo médico para o ICMS e o IPVA',
+  SPECIAL_DRIVER_LICENSE: 'CNH especial com restrições',
+  DRIVER_LICENSE: 'CNH do condutor autorizado',
+  FINANCIAL_DECLARATION: 'Declaração de disponibilidade financeira',
+  IPI_AUTHORIZATION: 'Autorização de isenção do IPI',
+  ICMS_AUTHORIZATION: 'Autorização de isenção do ICMS',
+};
+
+// DocumentType (backend) -> título da etapa do Overview.
+const etapaPorDocumento: Record<string, string> = {
+  ID_CARD: 'Identificação',
+  CPF: 'Identificação',
+  PROOF_OF_ADDRESS: 'Identificação',
+  MEDICAL_REPORT_IPI: 'Documentos médicos',
+  MEDICAL_REPORT_ICMS: 'Documentos médicos',
+  SPECIAL_DRIVER_LICENSE: 'Condutores autorizados',
+  DRIVER_LICENSE: 'Condutores autorizados',
+  FINANCIAL_DECLARATION: 'Renda e acesso gov.br',
+  IPI_AUTHORIZATION: 'Renda e acesso gov.br',
+  ICMS_AUTHORIZATION: 'Renda e acesso gov.br',
+};
+
+function rotuloDocumento(item: DocumentChecklistItemResponse) {
+  const nome =
+    rotulosDocumentos[item.documentType] ?? item.documentType;
+  if (item.alert === 'EXPIRING_SOON') return `${nome} (vencendo)`;
+  if (item.isUploaded) return `${nome} (enviado)`;
+  return nome;
+}
+
+function obterEtapas(
+  respostas: RespostasQuiz,
+  perfilBackend?: ProcessProgressResponse['profileType'],
+  checklist?: DocumentChecklistItemResponse[],
+  currentStep?: number
+) {
+  // Backend decide: PCD_DRIVER oculta condutores; PCD_NON_DRIVER mostra
+  // (cobre não-condutor e responsável). Sem backend, usa o quiz como antes.
   const precisaDeCondutores =
-    respostas.situacao === 'pcd-nao-condutor' ||
-    respostas.situacao === 'responsavel';
+    perfilBackend !== undefined
+      ? perfilBackend === 'PCD_NON_DRIVER'
+      : respostas.situacao === 'pcd-nao-condutor' ||
+        respostas.situacao === 'responsavel';
+
+  const documentosPorEtapa = new Map<string, string[]>();
+  for (const item of checklist ?? []) {
+    const titulo = etapaPorDocumento[item.documentType];
+    if (!titulo) continue;
+    const lista = documentosPorEtapa.get(titulo) ?? [];
+    lista.push(rotuloDocumento(item));
+    documentosPorEtapa.set(titulo, lista);
+  }
 
   return etapas
     .filter(
@@ -156,10 +218,19 @@ function obterEtapas(respostas: RespostasQuiz) {
         etapa.titulo !== 'Condutores autorizados' ||
         precisaDeCondutores
     )
-    .map((etapa, index) => ({
-      ...etapa,
-      numero: String(index + 1),
-    }));
+    .map((etapa, index) => {
+      const numero = String(index + 1);
+      const documentosReais = documentosPorEtapa.get(etapa.titulo);
+      return {
+        ...etapa,
+        numero,
+        documentos: documentosReais ?? etapa.documentos,
+        atual:
+          currentStep !== undefined
+            ? Number(numero) === currentStep
+            : Boolean(etapa.atual),
+      };
+    });
 }
 
 const categorias: Record<string, string> = {
@@ -177,6 +248,37 @@ export default function Overview({
   aoNavegar,
 }: OverviewProps) {
   const [respostas, setRespostas] = useState<RespostasQuiz>(lerRespostasQuiz);
+  const [progresso, setProgresso] =
+    useState<ProcessProgressResponse | null>(null);
+  const [checklist, setChecklist] = useState<
+    DocumentChecklistItemResponse[] | null
+  >(null);
+
+  useEffect(() => {
+    let ativo = true;
+
+    async function carregarDoBackend() {
+      if (!temToken()) return;
+      try {
+        const eu = await buscarUsuarioLogado();
+        if (!eu.activeProcessId) return;
+        const [prog, lista] = await Promise.all([
+          buscarProgressoProcesso(eu.activeProcessId),
+          buscarChecklistDocumentos(eu.activeProcessId).catch(() => null),
+        ]);
+        if (!ativo) return;
+        setProgresso(prog);
+        setChecklist(lista);
+      } catch {
+        // Falha de rede/401: fallback silencioso para o quiz local.
+      }
+    }
+
+    void carregarDoBackend();
+    return () => {
+      ativo = false;
+    };
+  }, []);
 
   useEffect(() => {
     function atualizarRespostas() {
@@ -192,22 +294,37 @@ export default function Overview({
     };
   }, []);
 
-  const etapasVisiveis = obterEtapas(respostas);
+  const etapasVisiveis = obterEtapas(
+    respostas,
+    progresso?.profileType,
+    checklist ?? undefined,
+    progresso?.currentStep
+  );
+
+  const percentual = Math.round(progresso?.progressPercentage ?? 0);
+  const concluidas = Math.min(
+    Math.max((progresso?.currentStep ?? 1) - 1, 0),
+    etapasVisiveis.length
+  );
 
   const perfil =
-    respostas.situacao === 'pcd-condutor'
+    progresso?.profileType === 'PCD_DRIVER'
       ? 'PcD condutor'
       : respostas.situacao === 'responsavel'
         ? 'Responsável'
-        : 'PcD não condutor';
+        : respostas.situacao === 'pcd-condutor'
+          ? 'PcD condutor'
+          : 'PcD não condutor';
 
   const categoria = respostas.categoria
     ? categorias[respostas.categoria] || 'Perfil personalizado'
     : 'Perfil personalizado';
 
   const precisaDeCondutores =
-    respostas.situacao === 'pcd-nao-condutor' ||
-    respostas.situacao === 'responsavel';
+    progresso?.profileType !== undefined
+      ? progresso.profileType === 'PCD_NON_DRIVER'
+      : respostas.situacao === 'pcd-nao-condutor' ||
+        respostas.situacao === 'responsavel';
 
   return (
     <PainelLayout aoSair={aoSair} aoNavegar={aoNavegar} itemAtivo="processo">
@@ -249,21 +366,23 @@ export default function Overview({
 
             <div className="overview-progress-info">
               <strong>Seu progresso</strong>
-              <span>0 de {etapasVisiveis.length} etapas concluídas</span>
+              <span>
+                {concluidas} de {etapasVisiveis.length} etapas concluídas
+              </span>
             </div>
 
             <div
               className="overview-progress-bar"
               role="progressbar"
               aria-label="Progresso do processo"
-              aria-valuenow={0}
+              aria-valuenow={percentual}
               aria-valuemin={0}
               aria-valuemax={100}
             >
-              <span />
+              <span style={{ width: `${percentual}%` }} />
             </div>
 
-            <strong className="overview-progress-percent">0%</strong>
+            <strong className="overview-progress-percent">{percentual}%</strong>
           </section>
 
           <section className="overview-steps">
@@ -288,7 +407,11 @@ export default function Overview({
                 </div>
 
                 {etapa.atual ? (
-                  <button type="button" className="overview-start" onClick={aoComecarEtapa}>
+                  <button
+                    type="button"
+                    className="overview-start"
+                    onClick={() => aoComecarEtapa?.(etapa.numero, etapa.titulo)}
+                  >
                     Começar <span>→</span>
                   </button>
                 ) : (

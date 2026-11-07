@@ -679,4 +679,8 @@
     align-self: flex-start;
   }
 }
+.etapaRenda-erro {
+  color: #c0392b;
+  font-weight: 600;
+}
 

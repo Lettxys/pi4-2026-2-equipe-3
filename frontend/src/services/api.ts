@@ -301,3 +301,92 @@ export async function sair() {
     limparToken();
   }
 }
+
+export interface DriverResponse {
+  driverId: number;
+  fullName: string;
+  cpfMasked: string;
+  cnhMasked: string;
+  cnhExpiresAt: string | null;
+  relationship: string | number;
+  createdAt: string;
+}
+
+export interface ListDriversResponse {
+  registeredDriversCount: number;
+  maxAllowedDrivers: number;
+  drivers: DriverResponse[];
+}
+
+export async function buscarCondutores(processId: number) {
+  const resposta = await api.get<ListDriversResponse>(
+    `/api/processes/${processId}/drivers`
+  );
+
+  return resposta.data;
+}
+export interface EnviarDocumentoData {
+  file: File;
+  documentType: string;
+  issuedAt?: string;
+  expiresAt?: string;
+  authorizedDriverId?: number;
+}
+
+export interface UploadDocumentResponse {
+  documentId: number;
+  documentType: string;
+  status: string;
+  expirationDate: string | null;
+  uploadedAt: string;
+}
+
+export async function enviarDocumento(
+  processId: number,
+  dados: EnviarDocumentoData
+) {
+  const formulario = new FormData();
+  formulario.append('File', dados.file);
+  formulario.append('DocumentType', dados.documentType);
+  if (dados.issuedAt) formulario.append('IssuedAt', dados.issuedAt);
+  if (dados.expiresAt) formulario.append('ExpiresAt', dados.expiresAt);
+  if (dados.authorizedDriverId !== undefined) {
+    formulario.append('AuthorizedDriverId', String(dados.authorizedDriverId));
+  }
+
+  const resposta = await api.post<UploadDocumentResponse>(
+    `/api/processes/${processId}/documents`,
+    formulario
+  );
+
+  return resposta.data;
+}
+
+export interface StepValidationError {
+  code: string;
+  field: string | null;
+  documentId: number | null;
+  message: string;
+}
+
+export interface StepValidationResponse {
+  step: number;
+  isValidated: boolean;
+  nextStep: number | null;
+  processStatus: string;
+  validationErrors: StepValidationError[];
+}
+
+export async function validarEtapa(
+  processId: number,
+  stepNumber: number,
+  financiado = false
+) {
+  const resposta = await api.post<StepValidationResponse>(
+    `/api/processes/${processId}/steps/${stepNumber}/validate`,
+    null,
+    { params: financiado ? { financed: true } : undefined }
+  );
+
+  return resposta.data;
+}

@@ -13,6 +13,8 @@ import EtapaIdentificacao from './pages/EtapaIdentificacao';
 import EtapaRenda from './pages/EtapaRenda';
 import Documentos from './pages/Documentos';
 import type { DestinoMenu } from './components/PainelLayout';
+import EtapaVeiculo from './pages/EtapaVeiculo';
+import EtapaRevisao from './pages/EtapaRevisao';
 import {
   EVENTO_SESSAO_EXPIRADA,
   buscarUsuarioLogado,
@@ -27,6 +29,8 @@ type Pagina =
   | 'overview'
   | 'etapa-identificacao'
   | 'etapa-renda'
+  | 'etapa-veiculo'
+  | 'etapa-revisao'
   | 'documentos';
 
 type Modal =
@@ -43,6 +47,8 @@ const PAGINAS_PROTEGIDAS: Pagina[] = [
   'overview',
   'etapa-identificacao',
   'etapa-renda',
+  'etapa-veiculo',
+  'etapa-revisao',
   'documentos',
 ];
 
@@ -51,7 +57,7 @@ function ehProtegida(pagina: Pagina): boolean {
 }
 
 function App() {
-  const [pagina, setPagina] = useState<Pagina>('landing');
+  const [pagina, setPagina] = useState<Pagina>('overview');
   const [modal, setModal] = useState<Modal>(null);
   const [emailRecuperacao, setEmailRecuperacao] = useState('');
   const [tokenRedefinicao, setTokenRedefinicao] = useState('');
@@ -181,11 +187,12 @@ function App() {
       {paginaAtual === 'overview' && (
         <Overview
           aoSair={deslogar}
-          aoComecarEtapa={(numero, titulo) =>
-            titulo?.includes('Renda') || numero === '4'
-              ? irPara('etapa-renda')
-              : irPara('etapa-identificacao')
-          }
+          aoComecarEtapa={(_numero, titulo) => {
+            if (titulo.includes('Renda')) irPara('etapa-renda');
+            else if (titulo.includes('veículo')) irPara('etapa-veiculo');
+            else if (titulo.includes('Revisão')) irPara('etapa-revisao');
+            else irPara('etapa-identificacao');
+          }}
           aoNavegar={navegar}
         />
       )}
@@ -205,6 +212,32 @@ function App() {
           voltarTrilha={() => irPara('overview')}
           aoConcluir={() => irPara('overview')}
           aoNavegar={navegar}
+        />
+      )}
+
+      {paginaAtual === 'etapa-veiculo' && (
+        <EtapaVeiculo
+          aoSair={deslogar}
+          voltarTrilha={() => irPara('overview')}
+          aoConcluir={() => irPara('overview')}
+          aoNavegar={navegar}
+          abrirCalculadora={() => irPara('calculadora')}
+        />
+      )}
+
+      {paginaAtual === 'etapa-revisao' && (
+        <EtapaRevisao
+          aoSair={deslogar}
+          voltarTrilha={() => irPara('overview')}
+          aoNavegar={navegar}
+          aoEditar={(etapa) => {
+            // Só existem telas para identificação, renda e veículo;
+            // as demais voltam para a trilha.
+            if (etapa === 'identificacao') irPara('etapa-identificacao');
+            else if (etapa === 'renda') irPara('etapa-renda');
+            else if (etapa === 'veiculo') irPara('etapa-veiculo');
+            else irPara('overview');
+          }}
         />
       )}
 

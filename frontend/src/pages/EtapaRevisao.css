@@ -1,0 +1,500 @@
+/* Etapa 6 — Revisão e dossiê */
+
+.etapaRev-layout * {
+  box-sizing: border-box;
+}
+
+.etapaRev-layout {
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 24px 20px 40px;
+  color: #193b59;
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 13px;
+}
+
+.etapaRev-conteudo {
+  display: grid;
+  grid-template-columns: minmax(0, 2.1fr) minmax(235px, 0.95fr);
+  gap: 26px;
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.etapaRev-principal {
+  min-width: 0;
+}
+
+.etapaRev-voltar {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin-bottom: 13px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: #42627d;
+  font-size: 11px;
+  cursor: pointer;
+}
+
+.etapaRev-voltar span {
+  color: #159e94;
+  font-size: 17px;
+}
+
+.etapaRev-progresso-etapas {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 5px;
+  margin-bottom: 13px;
+}
+
+.etapaRev-progresso-item {
+  height: 4px;
+  border-radius: 10px;
+  background: #dce9e8;
+}
+
+.etapaRev-progresso-item.concluido {
+  background: #159e94;
+}
+
+.etapaRev-indicador {
+  display: block;
+  margin-bottom: 5px;
+  color: #159e94;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 1px;
+}
+
+.etapaRev-principal h1 {
+  margin: 0 0 7px;
+  color: #193b59;
+  font-size: clamp(23px, 2.4vw, 32px);
+  letter-spacing: -1px;
+}
+
+.etapaRev-principal h1 span {
+  color: #159e94;
+}
+
+.etapaRev-subtitulo {
+  margin: 0 0 15px;
+  color: #60788c;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+/* CARD DA REVISÃO */
+
+.etapaRev-card {
+  margin-bottom: 13px;
+  padding: 6px 16px 14px;
+  border: 1px solid #e0ece9;
+  border-radius: 11px;
+  background: #fff;
+}
+
+.etapaRev-estado {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin: 0;
+  padding: 18px 0;
+  color: #60788c;
+  font-size: 12px;
+}
+
+.etapaRev-linhas {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.etapaRev-linha {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 0;
+  border-bottom: 1px solid #edf3f2;
+}
+
+.etapaRev-icone {
+  display: inline-flex;
+  flex: 0 0 22px;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.etapaRev-icone.ok {
+  background: #1f9d63;
+  color: #fff;
+}
+
+.etapaRev-icone.pendente {
+  background: #d97736;
+  color: #fff;
+}
+
+.etapaRev-linha-texto {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+
+.etapaRev-linha-texto strong {
+  color: #193b59;
+  font-size: 12px;
+}
+
+.etapaRev-linha-texto span {
+  overflow: hidden;
+  color: #71869a;
+  font-size: 10px;
+  text-overflow: ellipsis;
+}
+
+.etapaRev-linha-texto span.pendente {
+  color: #c2631f;
+}
+
+.etapaRev-editar {
+  flex-shrink: 0;
+  padding: 4px 2px;
+  border: 0;
+  background: transparent;
+  color: #159e94;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.etapaRev-editar:hover {
+  text-decoration: underline;
+}
+
+.etapaRev-declaracao {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin-top: 14px;
+  color: #42627d;
+  font-size: 11px;
+  line-height: 1.5;
+  cursor: pointer;
+}
+
+.etapaRev-declaracao input {
+  flex-shrink: 0;
+  width: 16px;
+  height: 16px;
+  margin: 1px 0 0;
+  accent-color: #159e94;
+}
+
+/* CARD DO DOSSIÊ */
+
+.etapaRev-dossie {
+  padding: 16px;
+  border: 1px solid #e0ece9;
+  border-radius: 11px;
+  background: #fff;
+}
+
+.etapaRev-dossie.pronto {
+  border-color: #bfe6d8;
+  background: #f2fbf8;
+}
+
+.etapaRev-dossie-cabecalho {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.etapaRev-dossie-cabecalho h2 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  color: #193b59;
+  font-size: 13px;
+}
+
+.etapaRev-selo-formato {
+  flex-shrink: 0;
+  padding: 5px 9px;
+  border-radius: 20px;
+  background: #e3f4ef;
+  color: #159e94;
+  font-size: 9px;
+  font-weight: 700;
+}
+
+.etapaRev-dossie p {
+  margin: 6px 0 13px;
+  color: #71869a;
+  font-size: 10px;
+  line-height: 1.5;
+}
+
+.etapaRev-dossie-botoes {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.etapaRev-dossie-botoes button {
+  min-height: 40px;
+  padding: 0 12px;
+  border-radius: 7px;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.etapaRev-dossie-botoes .primario {
+  border: 0;
+  background: #159e94;
+  color: #fff;
+}
+
+.etapaRev-dossie-botoes .secundario {
+  border: 1px solid #159e94;
+  background: #fff;
+  color: #159e94;
+}
+
+.etapaRev-dossie-botoes button:disabled {
+  border-color: #d5e4e6;
+  background: #e6eef0;
+  color: #849ba9;
+  cursor: not-allowed;
+}
+
+/* COLUNA LATERAL */
+
+.etapaRev-lateral {
+  display: flex;
+  flex-direction: column;
+  gap: 13px;
+}
+
+.etapaRev-lateral-card {
+  padding: 15px;
+  border: 1px solid #e4efec;
+  border-radius: 12px;
+  background: #fff;
+}
+
+.etapaRev-lateral h3 {
+  margin: 0 0 11px;
+  color: #193b59;
+  font-size: 12px;
+}
+
+.etapaRev-passos,
+.etapaRev-depois {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.etapaRev-passos li,
+.etapaRev-depois li {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  color: #4f6a80;
+  font-size: 10px;
+  line-height: 1.5;
+}
+
+.etapaRev-passos li > span {
+  display: inline-flex;
+  flex: 0 0 16px;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #e3f4ef;
+  color: #159e94;
+  font-size: 9px;
+  font-weight: 800;
+}
+
+.etapaRev-selo {
+  display: inline-flex;
+  flex: 0 0 30px;
+  align-items: center;
+  justify-content: center;
+  height: 18px;
+  border-radius: 5px;
+  background: #e3f4ef;
+  color: #159e94;
+  font-size: 9px;
+  font-weight: 800;
+}
+
+.etapaRev-link-sisen {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  min-height: 36px;
+  margin-top: 13px;
+  border: 1px solid #159e94;
+  border-radius: 7px;
+  background: #fff;
+  color: #159e94;
+  font-size: 11px;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.etapaRev-link-sisen:hover {
+  background: #f2fbf8;
+}
+
+.etapaRev-enviar {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 15px;
+  border: 1px solid #d7efea;
+  border-radius: 12px;
+  background: #eaf7f4;
+}
+
+.etapaRev-enviar button {
+  width: 100%;
+  min-height: 39px;
+  border: 0;
+  border-radius: 7px;
+  background: #159e94;
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.etapaRev-enviar > span {
+  color: #71869a;
+  font-size: 9px;
+  line-height: 1.5;
+  text-align: center;
+}
+
+.etapaRev-enviar.enviado {
+  align-items: center;
+  border-color: #bfe6d0;
+  background: #e6f6ee;
+}
+
+.etapaRev-enviar.enviado strong {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: #1f9d63;
+  font-size: 12px;
+}
+
+.etapaRev-enviar .etapaRev-desfazer {
+  width: auto;
+  min-height: 0;
+  padding: 2px;
+  background: transparent;
+  color: #708398;
+  font-size: 10px;
+  font-weight: 400;
+  text-decoration: underline;
+}
+
+/* AVISO FLUTUANTE */
+
+.etapaRev-toast {
+  position: fixed;
+  top: 70px;
+  right: 20px;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  max-width: calc(100vw - 40px);
+  padding: 11px 15px;
+  border: 1px solid #bfe6d0;
+  border-radius: 9px;
+  background: #fff;
+  box-shadow: 0 8px 24px rgba(25, 59, 89, 0.14);
+  color: #193b59;
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 12px;
+}
+
+.etapaRev-toast-icone {
+  display: inline-flex;
+  flex: 0 0 18px;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #1f9d63;
+  color: #fff;
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.etapaRev-toast.aviso {
+  border-color: #f0cfb5;
+}
+
+.etapaRev-toast.aviso .etapaRev-toast-icone {
+  background: #d97736;
+}
+
+@media (max-width: 950px) {
+  .etapaRev-conteudo {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .etapaRev-lateral {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .etapaRev-enviar {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 650px) {
+  .etapaRev-layout {
+    padding: 17px 13px 30px;
+  }
+
+  .etapaRev-lateral {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .etapaRev-dossie-botoes {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

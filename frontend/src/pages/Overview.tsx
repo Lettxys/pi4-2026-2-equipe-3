@@ -14,7 +14,6 @@ import './Overview.css';
 
 interface OverviewProps {
   aoSair: () => void | Promise<void>;
-  // Chamado ao clicar em "Começar" na etapa atual (numero, titulo)
   aoComecarEtapa?: (numero: string, titulo: string) => void;
   aoNavegar?: (destino: DestinoMenu) => void;
 }

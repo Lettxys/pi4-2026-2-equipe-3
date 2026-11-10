@@ -84,6 +84,12 @@ public sealed class AppException(
     public static AppException Conflict(string message) =>
         new(StatusCodes.Status409Conflict, ErrorCodes.Conflict, message);
 
+    public static AppException PayloadTooLarge(string message) =>
+        new(StatusCodes.Status413PayloadTooLarge, ErrorCodes.PayloadTooLarge, message);
+
+    public static AppException UnsupportedMediaType(string message) =>
+        new(StatusCodes.Status415UnsupportedMediaType, ErrorCodes.UnsupportedMediaType, message);
+
     public static AppException TooManyRequests(string message) =>
         new(StatusCodes.Status429TooManyRequests, ErrorCodes.TooManyRequests, message);
 }

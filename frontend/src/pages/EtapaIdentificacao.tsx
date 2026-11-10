@@ -13,6 +13,8 @@ interface EtapaIdentificacaoProps {
   aoConcluir?: () => void;
   // Chamado por "Começar etapa 2" no modal. Se não for informado, leva à trilha.
   aoComecarEtapa2?: () => void;
+  // Chamado quando a etapa é concluída (ao abrir o modal), para registrar o progresso
+  aoEtapaConcluida?: () => void;
   aoNavegar?: (destino: DestinoMenu) => void;
 }
 
@@ -246,6 +248,7 @@ export default function EtapaIdentificacao({
   voltarTrilha,
   aoConcluir,
   aoComecarEtapa2,
+  aoEtapaConcluida,
   aoNavegar,
 }: EtapaIdentificacaoProps) {
   const [documentos, setDocumentos] = useState<Documento[]>(DOCUMENTOS_INICIAIS);
@@ -432,6 +435,7 @@ export default function EtapaIdentificacao({
       return;
     }
 
+    aoEtapaConcluida?.();
     setEtapaConcluida(true);
   }
 

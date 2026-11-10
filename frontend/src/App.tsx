@@ -10,6 +10,7 @@ import VerificarCodigo from './pages/VerificarCodigo';
 import ResetPassword from './pages/ResetPassword';
 import Overview from './pages/Overview';
 import EtapaIdentificacao from './pages/EtapaIdentificacao';
+import EtapaDocumentosMedicos from './pages/EtapaDocumentosMedicos';
 import EtapaRenda from './pages/EtapaRenda';
 import Documentos from './pages/Documentos';
 import type { DestinoMenu } from './components/PainelLayout';
@@ -21,6 +22,10 @@ import {
   sair,
   temToken,
 } from './services/api';
+import {
+  limparEtapasConcluidas,
+  marcarEtapaConcluida,
+} from './services/progressoEtapas';
 
 type Pagina =
   | 'landing'
@@ -28,6 +33,7 @@ type Pagina =
   | 'quiz'
   | 'overview'
   | 'etapa-identificacao'
+  | 'etapa-documentos-medicos'
   | 'etapa-renda'
   | 'etapa-veiculo'
   | 'etapa-revisao'
@@ -46,6 +52,7 @@ type Modal =
 const PAGINAS_PROTEGIDAS: Pagina[] = [
   'overview',
   'etapa-identificacao',
+  'etapa-documentos-medicos',
   'etapa-renda',
   'etapa-veiculo',
   'etapa-revisao',
@@ -83,6 +90,7 @@ function App() {
   // Se o servidor recusar o token durante o uso, volta para a landing
   useEffect(() => {
     function aoExpirar() {
+      limparEtapasConcluidas();
       setPagina('landing');
       setModal(null);
     }
@@ -120,6 +128,7 @@ function App() {
       // O token é removido do localStorage mesmo se a requisição falhar
     }
 
+    limparEtapasConcluidas();
     setDestinoPendente(null);
     irPara('landing');
   }
@@ -191,6 +200,7 @@ function App() {
             if (titulo.includes('Renda')) irPara('etapa-renda');
             else if (titulo.includes('veículo')) irPara('etapa-veiculo');
             else if (titulo.includes('Revisão')) irPara('etapa-revisao');
+            else if (titulo.includes('médicos')) irPara('etapa-documentos-medicos');
             else irPara('etapa-identificacao');
           }}
           aoNavegar={navegar}
@@ -202,6 +212,18 @@ function App() {
           aoSair={deslogar}
           voltarTrilha={() => irPara('overview')}
           aoConcluir={() => irPara('overview')}
+          aoComecarEtapa2={() => irPara('etapa-documentos-medicos')}
+          aoEtapaConcluida={() => marcarEtapaConcluida('identificacao')}
+          aoNavegar={navegar}
+        />
+      )}
+
+      {paginaAtual === 'etapa-documentos-medicos' && (
+        <EtapaDocumentosMedicos
+          aoSair={deslogar}
+          voltarTrilha={() => irPara('overview')}
+          aoConcluir={() => irPara('overview')}
+          aoEtapaConcluida={() => marcarEtapaConcluida('documentos-medicos')}
           aoNavegar={navegar}
         />
       )}
@@ -210,7 +232,10 @@ function App() {
         <EtapaRenda
           aoSair={deslogar}
           voltarTrilha={() => irPara('overview')}
-          aoConcluir={() => irPara('overview')}
+          aoConcluir={() => {
+            marcarEtapaConcluida('renda');
+            irPara('overview');
+          }}
           aoNavegar={navegar}
         />
       )}
@@ -219,7 +244,10 @@ function App() {
         <EtapaVeiculo
           aoSair={deslogar}
           voltarTrilha={() => irPara('overview')}
-          aoConcluir={() => irPara('overview')}
+          aoConcluir={() => {
+            marcarEtapaConcluida('veiculo');
+            irPara('overview');
+          }}
           aoNavegar={navegar}
           abrirCalculadora={() => irPara('calculadora')}
         />

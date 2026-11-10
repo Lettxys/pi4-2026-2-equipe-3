@@ -1,0 +1,686 @@
+﻿
+.etapaRenda-layout *
+{ box-sizing: border-box; }
+
+.etapaRenda-layout svg {
+  display: inline-block;
+  flex-shrink: 0;
+  vertical-align: middle;
+}
+
+.etapaRenda-decoracao {
+  display: block;
+  max-width: 100%;
+  height: auto;
+}
+
+.etapaRenda-layout {
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 24px 20px 40px;
+  color: #193b59;
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 13px;
+}
+
+/* CABEÃ‡ALHO */
+
+.etapaRenda-header {
+  height: 53px;
+  display: flex;
+  align-items: center;
+  padding: 0 28px;
+  background: #ffffff;
+  border-bottom: 1px solid #e8f0ee;
+  gap: 35px;
+}
+
+.etapaRenda-logo {
+  color: #159e94;
+  font-size: 21px;
+  font-weight: 800;
+  min-width: 165px;
+}
+
+.etapaRenda-logo span {
+  color: #24b5a5;
+}
+
+.etapaRenda-breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  color: #58718b;
+  font-size: 11px;
+  flex: 1;
+}
+
+.etapaRenda-breadcrumb span:first-child {
+  color: #159e94;
+}
+
+.etapaRenda-breadcrumb strong {
+  color: #193b59;
+  font-weight: 600;
+}
+
+.etapaRenda-header-acoes {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.etapaRenda-header-acoes button {
+  border: none;
+  background: transparent;
+  color: #42627d;
+  cursor: pointer;
+  font-size: 11px;
+}
+
+.etapaRenda-header-acoes .etapaRenda-conta {
+  border-left: 1px solid #e3ecea;
+  padding-left: 16px;
+  color: #159e94;
+}
+
+/* CORPO E MENU */
+
+.etapaRenda-corpo {
+  display: flex;
+  min-height: calc(100vh - 53px);
+}
+
+.etapaRenda-sidebar {
+  width: 200px;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 20px 14px 15px;
+  background: #ffffff;
+  border-right: 1px solid #e8f0ee;
+}
+
+.etapaRenda-menu {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.etapaRenda-menu-item {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 11px;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: #36536d;
+  font-size: 12px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.etapaRenda-menu-item span {
+  font-size: 16px;
+}
+
+.etapaRenda-menu-item.ativo {
+  background: #e1f4f1;
+  color: #159e94;
+  font-weight: 700;
+}
+
+.etapaRenda-perfil {
+  padding: 13px;
+  border: 1px solid #e1f0ed;
+  border-radius: 11px;
+  background: #f0f8f6;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.etapaRenda-perfil-titulo {
+  color: #159e94;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 1px;
+}
+
+.etapaRenda-perfil strong {
+  font-size: 11px;
+}
+
+.etapaRenda-perfil p {
+  margin: 0;
+  color: #60788c;
+  font-size: 10px;
+  line-height: 1.5;
+}
+
+.etapaRenda-perfil button {
+  width: fit-content;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: #159e94;
+  font-size: 10px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+/* CONTEÃšDO */
+
+.etapaRenda-main {
+  flex: 1;
+  min-width: 0;
+  padding: 17px 20px 35px;
+}
+
+.etapaRenda-conteudo {
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: minmax(0, 2.1fr) minmax(235px, 0.95fr);
+  gap: 26px;
+}
+
+.etapaRenda-principal {
+  min-width: 0;
+}
+
+.etapaRenda-voltar {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 0;
+  margin-bottom: 13px;
+  border: none;
+  background: transparent;
+  color: #42627d;
+  font-size: 11px;
+  cursor: pointer;
+}
+
+.etapaRenda-voltar span {
+  font-size: 17px;
+  color: #159e94;
+}
+
+/* PROGRESSO */
+
+.etapaRenda-progresso-etapas {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 5px;
+  margin-bottom: 13px;
+}
+
+.etapaRenda-progresso-item {
+  height: 4px;
+  border-radius: 10px;
+  background: #dce9e8;
+}
+
+.etapaRenda-progresso-item.concluido {
+  background: #159e94;
+}
+
+.etapaRenda-indicador {
+  display: block;
+  margin-bottom: 5px;
+  color: #159e94;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 1px;
+}
+
+.etapaRenda-principal h1 {
+  margin: 0 0 7px;
+  color: #193b59;
+  font-size: clamp(23px, 2.4vw, 32px);
+  letter-spacing: -1px;
+}
+
+.etapaRenda-principal h1 span {
+  color: #159e94;
+}
+
+.etapaRenda-subtitulo {
+  margin: 0 0 13px;
+  color: #60788c;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.etapaRenda-progresso-interno {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 15px;
+  color: #42627d;
+  font-size: 10px;
+}
+
+.etapaRenda-progresso-interno strong {
+  white-space: nowrap;
+}
+
+.etapaRenda-barra {
+  flex: 1;
+  height: 6px;
+  overflow: hidden;
+  border-radius: 10px;
+  background: #dcece8;
+}
+
+.etapaRenda-barra div {
+  height: 100%;
+  border-radius: inherit;
+  background: #159e94;
+  transition: width 0.3s ease;
+}
+
+.etapaRenda-progresso-interno > span {
+  color: #159e94;
+  font-weight: 700;
+}
+
+/* CARTÃ•ES */
+
+.etapaRenda-card {
+  padding: 16px;
+  margin-bottom: 13px;
+  border: 1px solid #e0ece9;
+  border-radius: 11px;
+  background: #ffffff;
+}
+
+.etapaRenda-card-cabecalho {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.etapaRenda-card-cabecalho h2 {
+  margin: 0 0 6px;
+  color: #193b59;
+  font-size: 13px;
+}
+
+.etapaRenda-card-cabecalho p {
+  margin: 0;
+  color: #71869a;
+  font-size: 10px;
+  line-height: 1.5;
+}
+
+.etapaRenda-status {
+  flex-shrink: 0;
+  padding: 5px 9px;
+  border-radius: 20px;
+  background: #f0f4f7;
+  color: #708398;
+  font-size: 9px;
+}
+
+.etapaRenda-status.status-ok {
+  background: #e5f7ed;
+  color: #299b63;
+  font-weight: 700;
+}
+
+.etapaRenda-pergunta {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.etapaRenda-pergunta > strong {
+  color: #294966;
+  font-size: 11px;
+}
+
+.etapaRenda-opcoes {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 7px;
+}
+
+.etapaRenda-opcoes button {
+  min-height: 34px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 8px;
+  border: 1px solid #dceae8;
+  border-radius: 7px;
+  background: #ffffff;
+  color: #42627d;
+  font-size: 10px;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+.etapaRenda-opcoes button:hover {
+  border-color: #159e94;
+}
+
+.etapaRenda-opcoes button.selecionado {
+  border: 1.5px solid #159e94;
+  background: #e9f7f5;
+  color: #159e94;
+  font-weight: 700;
+}
+
+/* UPLOAD */
+
+.etapaRenda-upload-linha {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 115px;
+  gap: 12px;
+  align-items: end;
+  margin-top: 9px;
+}
+
+.etapaRenda-upload {
+  min-height: 40px;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 8px;
+  border: 1px dashed #8dd4ca;
+  border-radius: 7px;
+  background: #f7fcfb;
+  color: #60788c;
+  font-size: 10px;
+  line-height: 1.5;
+  cursor: pointer;
+  overflow-wrap: anywhere;
+}
+
+.etapaRenda-upload input {
+  display: none;
+}
+
+.etapaRenda-upload strong {
+  color: #159e94;
+}
+
+.etapaRenda-upload-icone {
+  flex-shrink: 0;
+  color: #159e94;
+  font-size: 19px;
+}
+
+.etapaRenda-ano {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.etapaRenda-ano label {
+  color: #60788c;
+  font-size: 10px;
+}
+
+.etapaRenda-ano select {
+  width: 100%;
+  height: 35px;
+  padding: 0 9px;
+  border: 1px solid #dceae8;
+  border-radius: 7px;
+  background: #ffffff;
+  color: #294966;
+  font-size: 11px;
+}
+
+/* CONTA GOV.BR */
+
+.etapaRenda-card-gov {
+  border-color: #b9e6dc;
+}
+
+.etapaRenda-opcoes-gov {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.etapaRenda-opcoes-gov button {
+  white-space: nowrap;
+}
+
+.etapaRenda-dica {
+  display: flex;
+  align-items: flex-start;
+  gap: 7px;
+  margin-top: 9px;
+  padding: 8px;
+  border-radius: 6px;
+  background: #e6f6ee;
+  color: #299b63;
+  font-size: 10px;
+  line-height: 1.5;
+}
+
+.etapaRenda-dica span {
+  font-weight: 800;
+}
+
+.etapaRenda-checkbox {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin-top: 9px;
+  color: #42627d;
+  font-size: 10px;
+  line-height: 1.5;
+  cursor: pointer;
+}
+
+.etapaRenda-checkbox input {
+  width: 14px;
+  height: 14px;
+  margin: 0;
+  accent-color: #159e94;
+}
+
+.etapaRenda-aviso {
+  margin-top: 12px;
+  padding: 10px;
+  border-radius: 7px;
+  background: #fff7e9;
+  color: #946b26;
+  font-size: 11px;
+  line-height: 1.5;
+}
+
+.etapaRenda-aviso a {
+  display: block;
+  margin-top: 5px;
+  color: #159e94;
+  font-weight: 700;
+}
+
+/* PAINEL DIREITO */
+
+.etapaRenda-lateral {
+  display: flex;
+  flex-direction: column;
+  gap: 13px;
+}
+
+.etapaRenda-info-card,
+.etapaRenda-ajuda-card,
+.etapaRenda-concluir-card {
+  padding: 15px;
+  border: 1px solid #e4efec;
+  border-radius: 12px;
+  background: #ffffff;
+}
+
+.etapaRenda-lateral h3 {
+  margin: 0 0 10px;
+  color: #193b59;
+  font-size: 12px;
+}
+
+.etapaRenda-info-card p {
+  display: flex;
+  align-items: flex-start;
+  gap: 7px;
+  margin: 0 0 8px;
+  color: #60788c;
+  font-size: 10px;
+  line-height: 1.6;
+}
+
+.etapaRenda-info-card p:last-child {
+  margin-bottom: 0;
+}
+
+.etapaRenda-info-card p span {
+  flex-shrink: 0;
+  width: 16px;
+  text-align: center;
+  color: #299b63;
+  font-weight: 800;
+}
+
+.etapaRenda-ajuda-card {
+  border-color: #f2dfb8;
+  background: #fff9ed;
+}
+
+.etapaRenda-ajuda-card p {
+  margin: 0;
+  color: #8c754c;
+  font-size: 10px;
+  line-height: 1.6;
+}
+
+.etapaRenda-concluir-card {
+  border-color: #d7efea;
+  background: #eaf7f4;
+}
+
+.etapaRenda-concluir-card button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  width: 100%;
+  height:30px;
+  text-align: center;
+  border-radius: 5px;
+}
+.etapa4-concluir-card button svg {
+  display: block;
+  flex-shrink: 0;
+}
+
+.etapa4-concluir-card button span {
+  display: inline-block;
+}
+
+.etapaRenda-concluir-card button:disabled {
+  background: #d5e4e6;
+  color: #849ba9;
+  cursor: not-allowed;
+}
+
+.etapaRenda-concluir-card > span {
+  display: block;
+  margin-top: 8px;
+  color: #71869a;
+  font-size: 9px;
+  line-height: 1.5;
+  text-align: center;
+}
+
+/* RESPONSIVIDADE */
+
+@media (max-width: 950px) {
+  .etapaRenda-conteudo {
+    grid-template-columns: 1fr;
+  }
+
+  .etapaRenda-lateral {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .etapaRenda-concluir-card {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 650px) {
+  .etapaRenda-header {
+    padding: 0 15px;
+    gap: 12px;
+  }
+
+  .etapaRenda-logo {
+    min-width: auto;
+  }
+
+  .etapaRenda-breadcrumb {
+    display: none;
+  }
+
+  .etapaRenda-header-acoes {
+    margin-left: auto;
+    gap: 8px;
+  }
+
+  .etapaRenda-sidebar {
+    display: none;
+  }
+
+  .etapaRenda-main {
+    padding: 17px 13px 30px;
+  }
+
+  .etapaRenda-lateral {
+    grid-template-columns: 1fr;
+  }
+
+  .etapaRenda-concluir-card {
+    grid-column: auto;
+  }
+}
+
+@media (max-width: 430px) {
+  .etapaRenda-upload-linha {
+    grid-template-columns: 1fr;
+  }
+
+  .etapaRenda-opcoes-gov {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .etapaRenda-card {
+    padding: 13px;
+  }
+
+  .etapaRenda-card-cabecalho {
+    flex-direction: column;
+  }
+
+  .etapaRenda-status {
+    align-self: flex-start;
+  }
+}
+.etapaRenda-erro {
+  color: #c0392b;
+  font-weight: 600;
+}
+

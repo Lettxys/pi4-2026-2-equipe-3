@@ -1,0 +1,7 @@
+
+.overview-step-current .overview-step-icon svg path {
+  stroke: currentColor;
+}
+.overview-done {
+  background: #e1f4f0;
+}

@@ -3,6 +3,14 @@ import type { ChangeEvent, DragEvent } from 'react';
 
 import PainelLayout from '../components/PainelLayout';
 import type { DestinoMenu } from '../components/PainelLayout';
+import {
+  listarDocumentosDaEtapa,
+  paraArquivo,
+  salvarDocumento,
+} from '../services/documentosSalvos';
+import { montarPerfil, proximaEtapaComTela } from '../services/regrasPerfil';
+import type { ChaveEtapaPerfil } from '../services/regrasPerfil';
+import { lerRespostasAtivas } from '../services/respostasPerfil';
 
 import './EtapaIdentificacao.css';
 import './EtapaConcluida.css';
@@ -11,9 +19,7 @@ interface EtapaIdentificacaoProps {
   aoSair: () => void | Promise<void>;
   voltarTrilha: () => void;
   aoConcluir?: () => void;
-  // Chamado por "Começar etapa 2" no modal. Se não for informado, leva à trilha.
-  aoComecarEtapa2?: () => void;
-  // Chamado quando a etapa é concluída (ao abrir o modal), para registrar o progresso
+  aoComecarEtapa2?: (chave?: ChaveEtapaPerfil) => void;
   aoEtapaConcluida?: () => void;
   aoNavegar?: (destino: DestinoMenu) => void;
 }
@@ -31,13 +37,13 @@ interface Documento {
   erro: string;
 }
 
-const NUMERO_ETAPA = 1;
-const TOTAL_ETAPAS = 6;
+const CHAVE_ETAPA = 'identificacao';
+const TITULO_ETAPA = 'Identificação';
 
 const TIPOS_ACEITOS = ['application/pdf', 'image/jpeg', 'image/png'];
 const EXTENSOES_ACEITAS = ['pdf', 'jpg', 'jpeg', 'png'];
-const TAMANHO_MAXIMO = 2 * 1024 * 1024; // 2 MB
-const TEMPO_AVISO = 4000; // ms
+const TAMANHO_MAXIMO = 2 * 1024 * 1024;
+const TEMPO_AVISO = 4000;
 
 const DICAS = [
   'Fotografe com boa luz e sem cortar as bordas do documento.',
@@ -255,13 +261,55 @@ export default function EtapaIdentificacao({
   const [arrastando, setArrastando] = useState('');
   const [aviso, setAviso] = useState('');
   const [etapaConcluida, setEtapaConcluida] = useState(false);
+  const [respostas] = useState(lerRespostasAtivas);
 
   const seletores = useRef<Record<string, HTMLInputElement | null>>({});
   const temporizadores = useRef<Record<string, number>>({});
   const temporizadorAviso = useRef<number>(0);
   const botaoEtapa2 = useRef<HTMLButtonElement | null>(null);
 
-  // Limpa os envios em andamento ao sair da tela
+  const etapasDoPerfil = montarPerfil(respostas ?? {}).etapas;
+  const posicaoNoPerfil = etapasDoPerfil.findIndex(
+    (etapa) => etapa.chave === CHAVE_ETAPA
+  );
+  const numeroEtapa = posicaoNoPerfil >= 0 ? posicaoNoPerfil + 1 : 1;
+  const totalEtapas = etapasDoPerfil.length;
+  const proxima = proximaEtapaComTela(etapasDoPerfil, CHAVE_ETAPA);
+  const numeroProxima = proxima ? proxima.numero : numeroEtapa + 1;
+  const tituloProxima = proxima ? proxima.etapa.titulo : '';
+
+  useEffect(() => {
+    let ativo = true;
+
+    void listarDocumentosDaEtapa(CHAVE_ETAPA).then((salvos) => {
+      if (!ativo || salvos.length === 0) {
+        return;
+      }
+
+      setDocumentos((atual) =>
+        atual.map((doc) => {
+          const salvo = salvos.find((item) => item.documentoId === doc.id);
+
+          if (!salvo || doc.status !== 'pendente') {
+            return doc;
+          }
+
+          return {
+            ...doc,
+            status: 'conferido',
+            progresso: 100,
+            arquivo: paraArquivo(salvo),
+            erro: '',
+          };
+        })
+      );
+    });
+
+    return () => {
+      ativo = false;
+    };
+  }, []);
+
   useEffect(() => {
     const ativos = temporizadores.current;
 
@@ -271,7 +319,6 @@ export default function EtapaIdentificacao({
     };
   }, []);
 
-  // Modal de etapa concluída: foco no botão principal e fechamento com Esc
   useEffect(() => {
     if (!etapaConcluida) {
       return;
@@ -322,8 +369,6 @@ export default function EtapaIdentificacao({
     }
   }
 
-  // TODO: trocar esta simulação pela chamada real da API de upload.
-  // Hoje o progresso é só visual e nada é enviado ao servidor.
   function iniciarEnvio(id: string, arquivo: File) {
     pararEnvio(id);
 
@@ -343,8 +388,17 @@ export default function EtapaIdentificacao({
         pararEnvio(id);
         atualizarDocumento(id, { status: 'conferido', progresso: 100 });
 
-        const titulo = DOCUMENTOS_INICIAIS.find((doc) => doc.id === id)?.titulo;
-        mostrarAviso(`${titulo ?? 'Documento'} conferido`);
+        const titulo =
+          DOCUMENTOS_INICIAIS.find((doc) => doc.id === id)?.titulo ?? 'Documento';
+        mostrarAviso(`${titulo} conferido`);
+
+        void salvarDocumento({
+          etapa: CHAVE_ETAPA,
+          etapaTitulo: TITULO_ETAPA,
+          documentoId: id,
+          titulo,
+          arquivo,
+        });
         return;
       }
 
@@ -352,8 +406,6 @@ export default function EtapaIdentificacao({
     }, 250);
   }
 
-  // Verifica formato e tamanho no navegador. A conferência de legibilidade
-  // e de datas depende do servidor.
   function validarArquivo(arquivo: File): string {
     const extensao = arquivo.name.split('.').pop()?.toLowerCase() ?? '';
     const extensaoOk = EXTENSOES_ACEITAS.includes(extensao);
@@ -429,7 +481,6 @@ export default function EtapaIdentificacao({
     window.open(endereco, '_blank', 'noopener');
   }
 
-  // "Concluir etapa" abre o modal de etapa concluída (só com todos conferidos)
   function concluirEtapa() {
     if (faltam > 0) {
       return;
@@ -444,9 +495,15 @@ export default function EtapaIdentificacao({
     (aoConcluir ?? voltarTrilha)();
   }
 
-  function comecarEtapa2() {
+  function comecarProximaEtapa() {
     setEtapaConcluida(false);
-    (aoComecarEtapa2 ?? aoConcluir ?? voltarTrilha)();
+
+    if (proxima && aoComecarEtapa2) {
+      aoComecarEtapa2(proxima.etapa.chave);
+      return;
+    }
+
+    (aoConcluir ?? voltarTrilha)();
   }
 
   const textoStatus: Record<StatusDocumento, string> = {
@@ -461,7 +518,7 @@ export default function EtapaIdentificacao({
       aoSair={aoSair}
       aoNavegar={aoNavegar}
       itemAtivo="processo"
-      caminho={['Meu processo', 'Etapa 1 · Identificação']}
+      caminho={['Meu processo', `Etapa ${numeroEtapa} · ${TITULO_ETAPA}`]}
     >
       {aviso && (
         <div className="etapa-toast" role="status">
@@ -483,20 +540,20 @@ export default function EtapaIdentificacao({
             className="etapa-passos"
             role="progressbar"
             aria-label="Etapas do processo"
-            aria-valuenow={NUMERO_ETAPA}
+            aria-valuenow={numeroEtapa}
             aria-valuemin={1}
-            aria-valuemax={TOTAL_ETAPAS}
+            aria-valuemax={totalEtapas}
           >
-            {Array.from({ length: TOTAL_ETAPAS }, (_, indice) => (
+            {Array.from({ length: totalEtapas }, (_, indice) => (
               <span
                 key={indice}
-                className={indice < NUMERO_ETAPA ? 'ativo' : ''}
+                className={indice < numeroEtapa ? 'ativo' : ''}
               />
             ))}
           </div>
 
           <p className="etapa-rotulo">
-            ETAPA {NUMERO_ETAPA} DE {TOTAL_ETAPAS}
+            ETAPA {numeroEtapa} DE {totalEtapas}
           </p>
 
           <h1 className="etapa-titulo">
@@ -504,8 +561,8 @@ export default function EtapaIdentificacao({
           </h1>
 
           <p className="etapa-subtitulo">
-            Envie os {total} documentos abaixo para liberar a etapa 2. Seu
-            progresso é salvo automaticamente.
+            Envie os {total} documentos abaixo para liberar a etapa {numeroProxima}.
+            Seu progresso é salvo automaticamente.
           </p>
 
           <div className="etapa-progresso">
@@ -671,7 +728,6 @@ export default function EtapaIdentificacao({
                           </button>
                         </span>
                       </div>
-
                     </>
                   )}
                 </div>
@@ -695,8 +751,8 @@ export default function EtapaIdentificacao({
             <h2>Concluir etapa</h2>
 
             <p>
-              Quando os {total} documentos estiverem conferidos, a etapa 2
-              (Documentos médicos) será liberada.
+              Quando os {total} documentos estiverem conferidos, a etapa {numeroProxima}
+              {tituloProxima ? ` (${tituloProxima})` : ''} será liberada.
             </p>
 
             <button
@@ -706,7 +762,7 @@ export default function EtapaIdentificacao({
               onClick={concluirEtapa}
             >
               {faltam > 0 && <IconeCadeado />}
-              Concluir etapa {NUMERO_ETAPA}
+              Concluir etapa {numeroEtapa}
             </button>
 
             <span className="etapa-concluir-info">
@@ -744,26 +800,27 @@ export default function EtapaIdentificacao({
             </span>
 
             <h2 id="etapa-concluida-titulo">
-              Etapa {NUMERO_ETAPA} concluída!
+              Etapa {numeroEtapa} concluída!
             </h2>
 
             <p className="etapa-concluida-texto">
               Seus documentos pessoais foram conferidos.
               <br />
               <strong>
-                Etapa {NUMERO_ETAPA + 1} · Documentos médicos
+                Etapa {numeroProxima}
+                {tituloProxima ? ` · ${tituloProxima}` : ''}
               </strong>{' '}
               liberada.
             </p>
 
             <div className="etapa-concluida-passos" aria-hidden="true">
-              {Array.from({ length: TOTAL_ETAPAS }, (_, indice) => (
+              {Array.from({ length: totalEtapas }, (_, indice) => (
                 <span
                   key={indice}
                   className={
-                    indice < NUMERO_ETAPA
+                    indice < numeroEtapa
                       ? 'ativo'
-                      : indice === NUMERO_ETAPA
+                      : indice === numeroEtapa
                         ? 'proxima'
                         : ''
                   }
@@ -776,9 +833,9 @@ export default function EtapaIdentificacao({
                 ref={botaoEtapa2}
                 type="button"
                 className="etapa-concluida-primario"
-                onClick={comecarEtapa2}
+                onClick={comecarProximaEtapa}
               >
-                Começar etapa {NUMERO_ETAPA + 1}
+                Começar etapa {numeroProxima}
                 <IconeSetaDireita />
               </button>
 

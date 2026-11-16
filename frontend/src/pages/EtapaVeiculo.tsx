@@ -1,13 +1,11 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import type { ChangeEvent } from 'react';
 
 import PainelLayout from '../components/PainelLayout';
 import type { DestinoMenu } from '../components/PainelLayout';
-import {
-  buscarProgressoProcesso,
-  buscarUsuarioLogado,
-  temToken,
-} from '../services/api';
+import { buscarUsuarioLogado, temToken } from '../services/api';
+import { montarPerfil } from '../services/regrasPerfil';
+import { lerRespostasAtivas } from '../services/respostasPerfil';
 
 import './EtapaVeiculo.css';
 
@@ -29,17 +27,16 @@ interface DadosVeiculo {
   motorizacao: string;
   portas: string;
   fabricadoBrasil: OpcaoSimNao | '';
-  arCondicionado: OpcaoSimNao | '';
   valorTabela: string;
   concessionaria: string;
 }
 
-// Numeração mostrada na tela (trilha do Overview).
+const CHAVE_ETAPA = 'veiculo';
 const NUMERO_ETAPA = 5;
 const TOTAL_ETAPAS = 6;
 
-const TETO_VALOR = 200000; // mesmo teto da Calculadora
-const ICMS_PADRAO = 12; // % — mesmo padrão da Calculadora
+const TETO_VALOR = 200000;
+const ICMS_PADRAO = 12;
 const TAMANHO_MAXIMO_BYTES = 10 * 1024 * 1024;
 const EXTENSOES_ACEITAS = ['.pdf', '.jpg', '.jpeg', '.png'];
 const CHAVE_RASCUNHO = 'veiculo-rascunho';
@@ -66,7 +63,6 @@ const MOTORIZACOES = [
 ];
 const PORTAS = ['4 portas', '5 portas', '2 portas'];
 
-// Alíquotas de IPI aproximadas, baseadas na tabela da Calculadora.
 const IPI_POR_MOTOR: Record<string, number> = {
   '1.0 flex turbo': 5,
   '1.0 flex': 3,
@@ -84,7 +80,6 @@ const DADOS_VAZIOS: DadosVeiculo = {
   motorizacao: '',
   portas: '',
   fabricadoBrasil: '',
-  arCondicionado: '',
   valorTabela: '',
   concessionaria: '',
 };
@@ -124,6 +119,13 @@ function formatarReais(valor: number): string {
   });
 }
 
+function formatarTamanho(bytes: number): string {
+  if (bytes >= 1024 * 1024) {
+    return `${(bytes / (1024 * 1024)).toFixed(1).replace('.', ',')} MB`;
+  }
+  return `${Math.max(1, Math.round(bytes / 1024))} KB`;
+}
+
 function lerRascunho(chave: string): DadosVeiculo | null {
   try {
     const bruto = localStorage.getItem(chave);
@@ -146,8 +148,78 @@ function salvarRascunho(chave: string, dados: DadosVeiculo) {
   try {
     localStorage.setItem(chave, JSON.stringify(dados));
   } catch {
-    // Armazenamento indisponível: a tela continua funcionando sem rascunho.
+    return;
   }
+}
+
+function IconeSeta() {
+  return (
+    <svg width="16" height="12" viewBox="0 0 18 14" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+      <path
+        d="M17 7H1M7 1L1 7L7 13"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        stroke="currentColor"
+      />
+    </svg>
+  );
+}
+
+function IconeSetaDireita() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+      <path
+        d="M2 8h12M9 3l5 5-5 5"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        stroke="currentColor"
+      />
+    </svg>
+  );
+}
+
+function IconeCheckRequisito() {
+  return (
+    <svg width="10" height="8" viewBox="0 0 12 10" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+      <path
+        d="M1 5L4.5 8.5L11 1"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        stroke="currentColor"
+      />
+    </svg>
+  );
+}
+
+function IconeCheckCirculo() {
+  return (
+    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+      <path
+        d="M6 10.5L9 13.5L14.5 7.5M1 10C1 5.0293 5.0293 1 10 1C14.9707 1 19 5.0293 19 10C19 14.9707 14.9707 19 10 19C5.0293 19 1 14.9707 1 10Z"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        stroke="currentColor"
+      />
+    </svg>
+  );
+}
+
+function IconeUpload() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 23 23" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+      <path
+        d="M11.4746 15.225V1.72498M5.47461 6.97498L11.4746 0.974976L17.4746 6.97498M0.974609 15.225V21.225H21.9746V15.225"
+        strokeWidth="1.95"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        stroke="currentColor"
+      />
+    </svg>
+  );
 }
 
 export default function EtapaVeiculo({
@@ -162,15 +234,21 @@ export default function EtapaVeiculo({
   const [erroProposta, setErroProposta] = useState('');
   const [arrastando, setArrastando] = useState(false);
   const [etapaConcluida, setEtapaConcluida] = useState(false);
-  const [etapaAtual, setEtapaAtual] = useState(NUMERO_ETAPA);
   const [chaveRascunho, setChaveRascunho] = useState<string | null>(null);
+  const [respostas] = useState(lerRespostasAtivas);
+  const inputProposta = useRef<HTMLInputElement>(null);
 
-  // O backend ainda não tem endpoint para os dados do veículo; só lemos o
-  // progresso do processo e guardamos o rascunho neste navegador, por usuário.
+  const etapasDoPerfil = montarPerfil(respostas ?? {}).etapas;
+  const posicaoNoPerfil = etapasDoPerfil.findIndex(
+    (etapa) => etapa.chave === CHAVE_ETAPA
+  );
+  const numeroEtapa = posicaoNoPerfil >= 0 ? posicaoNoPerfil + 1 : NUMERO_ETAPA;
+  const totalEtapas = etapasDoPerfil.length > 0 ? etapasDoPerfil.length : TOTAL_ETAPAS;
+
   useEffect(() => {
     let ativo = true;
 
-    async function carregarDoBackend() {
+    async function carregarRascunho() {
       if (!temToken()) return;
       try {
         const eu = await buscarUsuarioLogado();
@@ -180,17 +258,12 @@ export default function EtapaVeiculo({
         const salvo = lerRascunho(chave);
         if (salvo) setDados(salvo);
         setChaveRascunho(chave);
-
-        if (eu.activeProcessId) {
-          const prog = await buscarProgressoProcesso(eu.activeProcessId);
-          if (ativo) setEtapaAtual(prog.currentStep || NUMERO_ETAPA);
-        }
       } catch {
-        // Fallback silencioso: a tela funciona sem rascunho e sem progresso.
+        return;
       }
     }
 
-    void carregarDoBackend();
+    void carregarRascunho();
     return () => {
       ativo = false;
     };
@@ -225,17 +298,20 @@ export default function EtapaVeiculo({
         estado: estado(dados.fabricadoBrasil !== '', dados.fabricadoBrasil === 'sim'),
       },
       {
-        texto: 'Motor até 2.0 (1.0, 1.3, 1.5, 1.6, 2.0)',
+        texto: 'Motor até 2.0 (1.0 turbo)',
         estado: estado(Number.isFinite(motor), motor <= 2),
       },
       {
-        texto: 'Mínimo de 4 portas',
+        texto: 'Pelo menos 4 portas',
         estado: estado(
           dados.portas !== '',
           dados.portas === '4 portas' || dados.portas === '5 portas'
         ),
       },
-      { texto: 'Freios, estabilidade, airbag', estado: 'atendido' as EstadoRequisito },
+      {
+        texto: 'Flex, renovável, híbrido ou elétrico',
+        estado: 'atendido' as EstadoRequisito,
+      },
       {
         texto: 'Valor até R$ 200 mil',
         estado: estado(valorNumerico > 0, valorNumerico <= TETO_VALOR),
@@ -254,7 +330,6 @@ export default function EtapaVeiculo({
 
   const podeConcluir = totalRequisitos === requisitos.length && camposObrigatoriosOk;
 
-  // Estimativa no mesmo formato da Calculadora (IPI embutido no preço + ICMS).
   const economia = useMemo(() => {
     const aliquotaIpi = IPI_POR_MOTOR[dados.motorizacao];
     if (!valorNumerico || aliquotaIpi === undefined || valorNumerico > TETO_VALOR) {
@@ -265,12 +340,6 @@ export default function EtapaVeiculo({
     const icms = valorNumerico * (ICMS_PADRAO / 100);
     return { total: ipi + icms, aliquotaIpi };
   }, [dados.motorizacao, valorNumerico]);
-
-  function selecionarProposta(event: ChangeEvent<HTMLInputElement>) {
-    const arquivo = event.target.files?.[0];
-    event.target.value = '';
-    receberProposta(arquivo);
-  }
 
   function receberProposta(arquivo?: File) {
     if (!arquivo) return;
@@ -289,10 +358,22 @@ export default function EtapaVeiculo({
     setProposta(arquivo);
   }
 
+  function selecionarProposta(event: ChangeEvent<HTMLInputElement>) {
+    const arquivo = event.target.files?.[0];
+    event.target.value = '';
+    receberProposta(arquivo);
+  }
+
+  function verProposta() {
+    if (!proposta) return;
+    const url = URL.createObjectURL(proposta);
+    window.open(url, '_blank', 'noopener');
+    window.setTimeout(() => URL.revokeObjectURL(url), 60000);
+  }
+
   function concluirEtapa() {
     if (!podeConcluir) return;
 
-    // Salva antes de navegar, porque a tela é desmontada em seguida.
     if (chaveRascunho) salvarRascunho(chaveRascunho, dados);
     setEtapaConcluida(true);
     (aoConcluir ?? voltarTrilha)();
@@ -304,20 +385,20 @@ export default function EtapaVeiculo({
       ? 'Preencha os dados do veículo.'
       : !podeConcluir
         ? 'Confira os requisitos do veículo.'
-        : 'Você pode concluir esta etapa.';
+        : 'Você pode trocar de carro depois, antes da revisão.';
 
   return (
     <PainelLayout
       aoSair={aoSair}
       aoNavegar={aoNavegar}
       itemAtivo="processo"
-      caminho={['Meu processo', `Etapa ${NUMERO_ETAPA} · Dados do veículo`]}
+      caminho={['Meu processo', `Etapa ${numeroEtapa} · Dados do veículo`]}
     >
       <div className="etapa5-layout">
         <div className="etapa5-conteudo">
           <section className="etapa5-principal">
             <button type="button" className="etapa5-voltar" onClick={voltarTrilha}>
-              <span aria-hidden="true">←</span>
+              <IconeSeta />
               Voltar para a trilha
             </button>
 
@@ -325,20 +406,20 @@ export default function EtapaVeiculo({
               className="etapa5-progresso-etapas"
               role="progressbar"
               aria-label="Etapas do processo"
-              aria-valuenow={etapaAtual}
+              aria-valuenow={numeroEtapa}
               aria-valuemin={1}
-              aria-valuemax={TOTAL_ETAPAS}
+              aria-valuemax={totalEtapas}
             >
-              {Array.from({ length: TOTAL_ETAPAS }).map((_, index) => (
+              {Array.from({ length: totalEtapas }).map((_, index) => (
                 <div
                   key={index}
-                  className={`etapa5-progresso-item${index < etapaAtual ? ' concluido' : ''}`}
+                  className={`etapa5-progresso-item${index < numeroEtapa ? ' concluido' : ''}`}
                 />
               ))}
             </div>
 
             <span className="etapa5-indicador">
-              ETAPA {NUMERO_ETAPA} DE {TOTAL_ETAPAS}
+              ETAPA {numeroEtapa} DE {totalEtapas}
             </span>
 
             <h1>
@@ -346,8 +427,8 @@ export default function EtapaVeiculo({
             </h1>
 
             <p className="etapa5-subtitulo">
-              Preencha os dados do carro que você pretende comprar.
-              Confira os requisitos enquanto você digita.
+              Preencha os dados do carro que você pretende comprar. Conferimos
+              os requisitos enquanto você digita.
             </p>
 
             <div className="etapa5-progresso-interno">
@@ -369,7 +450,9 @@ export default function EtapaVeiculo({
             <section className="etapa5-card">
               <div className="etapa5-card-cabecalho">
                 <h2>Sobre o veículo</h2>
-                <span className="etapa5-status">
+                <span
+                  className={`etapa5-status ${podeConcluir ? 'status-completo' : 'status-preenchendo'}`}
+                >
                   {podeConcluir ? 'Completo' : 'Preenchendo'}
                 </span>
               </div>
@@ -443,7 +526,7 @@ export default function EtapaVeiculo({
                 </div>
 
                 <fieldset className="etapa5-campo etapa5-campo-opcoes">
-                  <legend>Fabricado no Brasil?</legend>
+                  <legend>Fabricado ou montado no Brasil?</legend>
 
                   <div className="etapa5-opcoes">
                     {OPCOES_SIM_NAO.map((valor) => (
@@ -471,95 +554,79 @@ export default function EtapaVeiculo({
                   />
                 </div>
 
-                <div className="etapa5-campo">
+                <div className="etapa5-campo etapa5-campo-opcional">
                   <label htmlFor="etapa5-concessionaria">Concessionária (opcional)</label>
                   <input
                     id="etapa5-concessionaria"
                     value={dados.concessionaria}
                     maxLength={120}
                     onChange={(e) => alterar('concessionaria', e.target.value)}
-                    placeholder="Nome da cidade"
+                    placeholder="Nome e cidade"
                   />
-                </div>
-              </div>
-
-              <div className="etapa5-campo etapa5-campo-ar">
-                <span className="etapa5-label">Ar-condicionado?</span>
-
-                <div className="etapa5-opcoes etapa5-opcoes-ar">
-                  {OPCOES_SIM_NAO.map((valor) => (
-                    <button
-                      type="button"
-                      key={valor}
-                      className={dados.arCondicionado === valor ? 'selecionado' : ''}
-                      aria-pressed={dados.arCondicionado === valor}
-                      onClick={() => alterar('arCondicionado', valor)}
-                    >
-                      {ROTULO_OPCAO[valor]}
-                    </button>
-                  ))}
                 </div>
               </div>
             </section>
 
-            <section className="etapa5-card etapa5-proposta">
+            <section className="etapa5-card">
               <div className="etapa5-card-cabecalho">
                 <div>
                   <h2>Proposta da concessionária</h2>
                   <p>
-                    Se já tiver, selecione o orçamento. Ajuda a conferir
-                    o valor e a versão.
+                    Se já tiver, envie o orçamento. Ajuda a conferir o valor e a
+                    versão.
                   </p>
                 </div>
 
                 <span className="etapa5-status">Opcional</span>
               </div>
 
-              <label
-                className={`etapa5-upload${arrastando ? ' arrastando' : ''}`}
-                onDragOver={(e) => {
-                  e.preventDefault();
-                  setArrastando(true);
-                }}
-                onDragLeave={() => setArrastando(false)}
-                onDrop={(e) => {
-                  e.preventDefault();
-                  setArrastando(false);
-                  receberProposta(e.dataTransfer.files?.[0]);
-                }}
-              >
+              <div className="etapa5-upload-bloco">
                 <input
+                  ref={inputProposta}
+                  id="etapa5-proposta"
+                  className="etapa5-input-oculto"
                   type="file"
                   accept=".pdf,.jpg,.jpeg,.png"
                   onChange={selecionarProposta}
                 />
 
-                <span aria-hidden="true">
-                  <svg width="15" height="23" viewBox="0 0 23 23" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path
-                      d="M11.4746 15.225V1.72498M5.47461 6.97498L11.4746 0.974976L17.4746 6.97498M0.974609 15.225V21.225H21.9746V15.225"
-                      strokeWidth="1.95"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      stroke="#16A095"
-                    />
-                  </svg>
-                </span>
-
-                {proposta
-                  ? `Arquivo selecionado: ${proposta.name}`
-                  : 'Arraste o arquivo aqui ou selecione do computador'}
-              </label>
-
-              {proposta && (
-                <button
-                  type="button"
-                  className="etapa5-remover"
-                  onClick={() => setProposta(null)}
-                >
-                  Remover arquivo
-                </button>
-              )}
+                {proposta ? (
+                  <div className="etapa5-arquivo">
+                    <IconeCheckCirculo />
+                    <span className="etapa5-arquivo-nome">
+                      {proposta.name} · {formatarTamanho(proposta.size)}
+                    </span>
+                    <div className="etapa5-arquivo-acoes">
+                      <button type="button" onClick={verProposta}>
+                        Ver
+                      </button>
+                      <button type="button" onClick={() => inputProposta.current?.click()}>
+                        Substituir
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <label
+                    htmlFor="etapa5-proposta"
+                    className={`etapa5-upload${arrastando ? ' arrastando' : ''}`}
+                    onDragOver={(e) => {
+                      e.preventDefault();
+                      setArrastando(true);
+                    }}
+                    onDragLeave={() => setArrastando(false)}
+                    onDrop={(e) => {
+                      e.preventDefault();
+                      setArrastando(false);
+                      receberProposta(e.dataTransfer.files?.[0]);
+                    }}
+                  >
+                    <IconeUpload />
+                    <span>
+                      Arraste o arquivo aqui ou <strong>selecione do computador</strong>
+                    </span>
+                  </label>
+                )}
+              </div>
 
               {erroProposta && (
                 <p className="etapa5-erro" role="alert">
@@ -578,15 +645,7 @@ export default function EtapaVeiculo({
                   <li key={item.texto} className={item.estado}>
                     <span aria-hidden="true">
                       {item.estado === 'atendido' ? (
-                        <svg width="12" height="10" viewBox="0 0 12 10" fill="none" xmlns="http://www.w3.org/2000/svg">
-                          <path
-                            d="M1 5L4.5 8.5L11 1"
-                            strokeWidth="2"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            stroke="white"
-                          />
-                        </svg>
+                        <IconeCheckRequisito />
                       ) : item.estado === 'nao-atendido' ? (
                         '!'
                       ) : (
@@ -631,14 +690,21 @@ export default function EtapaVeiculo({
 
               {abrirCalculadora && (
                 <button type="button" onClick={abrirCalculadora}>
-                  Abrir calculadora
+                  Abrir na calculadora
                 </button>
               )}
             </section>
 
             <section className="etapa5-concluir-card">
               <button type="button" disabled={!podeConcluir} onClick={concluirEtapa}>
-                {etapaConcluida ? '✓ Etapa concluída' : `Concluir etapa ${NUMERO_ETAPA} →`}
+                {etapaConcluida ? (
+                  'Etapa concluída'
+                ) : (
+                  <>
+                    Concluir etapa {numeroEtapa}
+                    <IconeSetaDireita />
+                  </>
+                )}
               </button>
 
               <span>{mensagemConcluir}</span>

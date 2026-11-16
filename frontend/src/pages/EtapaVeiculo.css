@@ -1,176 +1,57 @@
-/* Etapa 5 — Dados do veículo */
-
-.etapa5-layout * {
-  box-sizing: border-box;
-}
-
 .etapa5-layout {
+  --e5-fonte: Arial, Helvetica, sans-serif;
+  --e5-primaria: #16a095;
+  --e5-primaria-escura: #0f7f77;
+  --e5-primaria-clara: #eaf7f5;
+  --e5-titulo: #14304f;
+  --e5-texto: #4d6580;
+  --e5-texto-suave: #6f849a;
+  --e5-azul-suave: #5f7fa3;
+  --e5-borda: #e3eaef;
+  --e5-borda-campo: #cfe5e1;
+  --e5-verde: #1f9d63;
+  --e5-verde-claro: #e5f6ec;
+  --e5-laranja: #d97736;
+
   width: 100%;
   max-width: 1200px;
   margin: 0 auto;
-  padding: 24px 20px 40px;
-  color: #193b59;
-  font-family: Arial, Helvetica, sans-serif;
+  padding: 22px 24px 40px;
+  color: var(--e5-titulo);
+  font-family: var(--e5-fonte);
   font-size: 13px;
 }
 
-.etapa5-header {
-  height: 53px;
-  display: flex;
-  align-items: center;
-  gap: 35px;
-  padding: 0 28px;
-  background: #fff;
-  border-bottom: 1px solid #e8f0ee;
+.etapa5-layout *,
+.etapa5-layout *::before,
+.etapa5-layout *::after {
+  box-sizing: border-box;
 }
 
-.etapa5-logo {
-  min-width: 165px;
-  color: #159e94;
-  font-size: 21px;
-  font-weight: 800;
+.etapa5-layout svg {
+  display: inline-block;
+  flex-shrink: 0;
+  vertical-align: middle;
 }
 
-.etapa5-logo span {
-  color: #24b5a5;
+.etapa5-layout button,
+.etapa5-layout input,
+.etapa5-layout select {
+  font-family: inherit;
 }
 
-.etapa5-breadcrumb {
-  display: flex;
-  flex: 1;
-  align-items: center;
-  gap: 9px;
-  color: #58718b;
-  font-size: 11px;
-}
-
-.etapa5-breadcrumb span:first-child {
-  color: #159e94;
-}
-
-.etapa5-breadcrumb strong {
-  color: #193b59;
-  font-weight: 600;
-}
-
-.etapa5-header-acoes {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-}
-
-.etapa5-header-acoes button {
-  border: 0;
-  background: transparent;
-  color: #42627d;
-  cursor: pointer;
-  font-size: 11px;
-}
-
-.etapa5-header-acoes .etapa5-conta {
-  padding-left: 16px;
-  border-left: 1px solid #e3ecea;
-  color: #159e94;
-}
-
-.etapa5-corpo {
-  display: flex;
-  min-height: calc(100vh - 53px);
-}
-
-.etapa5-sidebar {
-  display: flex;
-  flex: 0 0 200px;
-  flex-direction: column;
-  justify-content: space-between;
-  padding: 20px 14px 15px;
-  background: #fff;
-  border-right: 1px solid #e8f0ee;
-}
-
-.etapa5-menu {
-  display: flex;
-  flex-direction: column;
-  gap: 7px;
-}
-
-.etapa5-menu-item {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  width: 100%;
-  padding: 11px;
-  border: 0;
-  border-radius: 8px;
-  background: transparent;
-  color: #36536d;
-  font-size: 12px;
-  text-align: left;
-  cursor: pointer;
-}
-
-.etapa5-menu-item span {
-  font-size: 16px;
-}
-
-.etapa5-menu-item.ativo {
-  background: #e1f4f1;
-  color: #159e94;
-  font-weight: 700;
-}
-
-.etapa5-perfil {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  padding: 13px;
-  border: 1px solid #e1f0ed;
-  border-radius: 11px;
-  background: #f0f8f6;
-}
-
-.etapa5-perfil-titulo {
-  color: #159e94;
-  font-size: 9px;
-  font-weight: 800;
-  letter-spacing: 1px;
-}
-
-.etapa5-perfil strong {
-  font-size: 11px;
-}
-
-.etapa5-perfil p {
-  margin: 0;
-  color: #60788c;
-  font-size: 10px;
-  line-height: 1.5;
-}
-
-.etapa5-perfil button {
-  width: fit-content;
-  padding: 0;
-  border: 0;
-  background: transparent;
-  color: #159e94;
-  font-size: 10px;
-  font-weight: 700;
-  cursor: pointer;
-}
-
-.etapa5-main {
-  flex: 1;
-  min-width: 0;
-  padding: 17px 20px 35px;
+.etapa5-layout button:focus-visible,
+.etapa5-layout select:focus-visible,
+.etapa5-layout input:focus-visible {
+  outline: 2px solid var(--e5-primaria);
+  outline-offset: 2px;
 }
 
 .etapa5-conteudo {
   display: grid;
-  grid-template-columns: minmax(0, 2.1fr) minmax(235px, 0.95fr);
-  gap: 26px;
-  width: 100%;
-  max-width: 1200px;
-  margin: 0 auto;
+  grid-template-columns: minmax(0, 1.85fr) minmax(260px, 1fr);
+  gap: 28px;
+  align-items: start;
 }
 
 .etapa5-principal {
@@ -180,62 +61,64 @@
 .etapa5-voltar {
   display: flex;
   align-items: center;
-  gap: 7px;
-  margin-bottom: 13px;
+  gap: 8px;
+  margin-bottom: 12px;
   padding: 0;
-  border: 0;
+  border: none;
   background: transparent;
-  color: #42627d;
-  font-size: 11px;
+  color: var(--e5-titulo);
+  font-size: 12px;
   cursor: pointer;
 }
 
-.etapa5-voltar span {
-  color: #159e94;
-  font-size: 17px;
+.etapa5-voltar svg {
+  width: 16px;
+  height: 12px;
 }
 
 .etapa5-progresso-etapas {
   display: grid;
   grid-template-columns: repeat(6, 1fr);
-  gap: 5px;
-  margin-bottom: 13px;
+  gap: 6px;
+  margin-bottom: 14px;
 }
 
 .etapa5-progresso-item {
-  height: 4px;
+  height: 5px;
   border-radius: 10px;
-  background: #dce9e8;
+  background: #e3ebf1;
 }
 
 .etapa5-progresso-item.concluido {
-  background: #159e94;
+  background: var(--e5-primaria);
 }
 
 .etapa5-indicador {
   display: block;
-  margin-bottom: 5px;
-  color: #159e94;
+  margin-bottom: 6px;
+  color: var(--e5-azul-suave);
   font-size: 10px;
-  font-weight: 800;
-  letter-spacing: 1px;
+  font-weight: 600;
+  letter-spacing: 2px;
 }
 
 .etapa5-principal h1 {
-  margin: 0 0 7px;
-  color: #193b59;
-  font-size: clamp(23px, 2.4vw, 32px);
-  letter-spacing: -1px;
+  margin: 0 0 8px;
+  color: var(--e5-titulo);
+  font-size: clamp(26px, 3vw, 34px);
+  font-weight: 700;
+  line-height: 1.15;
+  letter-spacing: -0.5px;
 }
 
 .etapa5-principal h1 span {
-  color: #159e94;
+  color: var(--e5-primaria);
 }
 
 .etapa5-subtitulo {
-  margin: 0 0 13px;
-  color: #60788c;
-  font-size: 12px;
+  margin: 0 0 12px;
+  color: var(--e5-texto);
+  font-size: 14px;
   line-height: 1.5;
 }
 
@@ -243,12 +126,14 @@
   display: flex;
   align-items: center;
   gap: 12px;
-  margin-bottom: 15px;
-  color: #42627d;
-  font-size: 10px;
+  max-width: 610px;
+  margin-bottom: 16px;
+  color: var(--e5-titulo);
+  font-size: 11px;
 }
 
 .etapa5-progresso-interno strong {
+  font-weight: 700;
   white-space: nowrap;
 }
 
@@ -257,27 +142,27 @@
   height: 6px;
   overflow: hidden;
   border-radius: 10px;
-  background: #dcece8;
+  background: #dcebe8;
 }
 
 .etapa5-barra div {
   height: 100%;
   border-radius: inherit;
-  background: #159e94;
+  background: var(--e5-primaria);
   transition: width 0.25s ease;
 }
 
 .etapa5-progresso-interno > span {
-  color: #159e94;
-  font-weight: 700;
+  color: var(--e5-primaria);
+  font-weight: 600;
 }
 
 .etapa5-card {
-  margin-bottom: 13px;
-  padding: 16px;
-  border: 1px solid #e0ece9;
-  border-radius: 11px;
-  background: #fff;
+  margin-bottom: 14px;
+  padding: 18px 20px 20px;
+  border: 1px solid var(--e5-borda);
+  border-radius: 14px;
+  background: #ffffff;
 }
 
 .etapa5-card-cabecalho {
@@ -285,71 +170,96 @@
   align-items: flex-start;
   justify-content: space-between;
   gap: 10px;
-  margin-bottom: 13px;
+  margin-bottom: 14px;
 }
 
 .etapa5-card-cabecalho h2 {
   margin: 0;
-  color: #193b59;
-  font-size: 13px;
+  color: var(--e5-titulo);
+  font-size: 15px;
+  font-weight: 700;
 }
 
 .etapa5-card-cabecalho p {
-  margin: 5px 0 0;
-  color: #71869a;
-  font-size: 10px;
+  margin: 8px 0 0;
+  color: var(--e5-texto-suave);
+  font-size: 12px;
   line-height: 1.5;
 }
 
 .etapa5-status {
   flex-shrink: 0;
-  padding: 5px 9px;
+  padding: 4px 10px;
   border-radius: 20px;
-  background: #f0f4f7;
-  color: #708398;
-  font-size: 9px;
+  background: #eef2f6;
+  color: var(--e5-texto-suave);
+  font-size: 10px;
+  font-weight: 500;
+}
+
+.etapa5-status.status-preenchendo {
+  background: #e4eef9;
+  color: #3a6ea5;
+  font-weight: 600;
+}
+
+.etapa5-status.status-completo {
+  background: var(--e5-verde-claro);
+  color: var(--e5-verde);
+  font-weight: 600;
 }
 
 .etapa5-form-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 10px 13px;
+  gap: 12px 14px;
 }
 
 .etapa5-campo {
   display: flex;
   min-width: 0;
   flex-direction: column;
-  gap: 5px;
+  gap: 6px;
 }
 
 .etapa5-campo label,
-.etapa5-campo legend,
-.etapa5-label {
-  color: #42627d;
-  font-size: 10px;
+.etapa5-campo legend {
+  color: var(--e5-titulo);
+  font-size: 11px;
+  font-weight: 600;
 }
 
 .etapa5-campo input,
 .etapa5-campo select {
   width: 100%;
   min-width: 0;
-  height: 34px;
-  box-sizing: border-box;
-  padding: 0 10px;
-  border: 1px solid #dceae8;
-  border-radius: 6px;
-  outline: none;
-  background: #fff;
-  color: #294966;
-  font: inherit;
-  font-size: 10px;
+  height: 36px;
+  padding: 0 12px;
+  border: 1px solid var(--e5-borda-campo);
+  border-radius: 8px;
+  background: #ffffff;
+  color: var(--e5-titulo);
+  font-size: 12px;
+}
+
+.etapa5-campo input::placeholder {
+  color: #8a9fb2;
+}
+
+.etapa5-campo select {
+  padding-right: 34px;
+  background: #ffffff url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8' fill='none'><path d='M1 1.5L6 6.5L11 1.5' stroke='%2314304f' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/></svg>") no-repeat right 12px center;
+  appearance: none;
+  -webkit-appearance: none;
 }
 
 .etapa5-campo input:focus,
 .etapa5-campo select:focus {
-  border-color: #159e94;
-  box-shadow: 0 0 0 2px rgba(21, 158, 148, 0.12);
+  border-color: var(--e5-primaria);
+}
+
+.etapa5-campo-opcional input {
+  background: #f0f6f5;
 }
 
 .etapa5-campo-opcoes {
@@ -360,122 +270,197 @@
 }
 
 .etapa5-campo-opcoes legend {
-  margin-bottom: 5px;
+  margin-bottom: 6px;
+  padding: 0;
 }
 
 .etapa5-opcoes {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 6px;
+  gap: 8px;
 }
 
 .etapa5-opcoes button {
-  min-height: 34px;
+  min-height: 36px;
   padding: 6px;
-  border: 1px solid #dceae8;
-  border-radius: 6px;
-  background: #fff;
-  color: #42627d;
-  font-size: 10px;
+  border: 1.5px solid var(--e5-borda-campo);
+  border-radius: 8px;
+  background: #ffffff;
+  color: var(--e5-texto);
+  font-size: 12px;
   cursor: pointer;
+  transition: border-color 0.2s;
+}
+
+.etapa5-opcoes button:hover {
+  border-color: var(--e5-primaria);
 }
 
 .etapa5-opcoes button.selecionado {
-  border-color: #159e94;
-  background: #e9f7f5;
-  color: #159e94;
-  font-weight: 700;
+  border-color: var(--e5-primaria);
+  background: var(--e5-primaria-clara);
+  color: var(--e5-primaria-escura);
+  font-weight: 600;
 }
 
-.etapa5-campo-ar {
-  margin-top: 11px;
+.etapa5-upload-bloco {
+  position: relative;
 }
 
-.etapa5-opcoes-ar {
-  max-width: 260px;
+.etapa5-input-oculto {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
 }
 
-.etapa5-proposta .etapa5-card-cabecalho {
-  margin-bottom: 10px;
+.etapa5-input-oculto:focus-visible + .etapa5-upload {
+  outline: 2px solid var(--e5-primaria);
+  outline-offset: 2px;
 }
 
 .etapa5-upload {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
-  min-height: 42px;
-  padding: 8px;
-  border: 1px dashed #8dd4ca;
-  border-radius: 7px;
-  background: #f7fcfb;
-  color: #60788c;
-  font-size: 10px;
+  gap: 10px;
+  min-height: 50px;
+  padding: 8px 12px;
+  border: 1.5px dashed #a5ddd3;
+  border-radius: 10px;
+  background: #fbfefd;
+  color: #35516d;
+  font-size: 11.5px;
+  line-height: 1.5;
   text-align: center;
+  cursor: pointer;
+  transition: background 0.2s, border-color 0.2s;
+}
+
+.etapa5-upload.arrastando {
+  border-color: var(--e5-primaria);
+  background: #e3f5f2;
+}
+
+.etapa5-upload strong {
+  color: var(--e5-primaria);
+  text-decoration: underline;
+}
+
+.etapa5-upload svg {
+  width: 18px;
+  height: 18px;
+  color: var(--e5-primaria);
+}
+
+.etapa5-arquivo {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 50px;
+  padding: 8px 16px;
+  border: 1px solid #dcebe8;
+  border-radius: 8px;
+  background: #f1f8f6;
+}
+
+.etapa5-arquivo svg {
+  width: 20px;
+  height: 20px;
+  color: var(--e5-primaria);
+}
+
+.etapa5-arquivo-nome {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  color: var(--e5-titulo);
+  font-size: 12px;
+  font-weight: 700;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.etapa5-arquivo-acoes {
+  display: flex;
+  flex-shrink: 0;
+  gap: 14px;
+}
+
+.etapa5-arquivo-acoes button {
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: var(--e5-primaria);
+  font-size: 11px;
+  font-weight: 700;
   cursor: pointer;
 }
 
-.etapa5-upload input {
-  display: none;
+.etapa5-arquivo-acoes button:hover {
+  text-decoration: underline;
 }
 
-.etapa5-upload span {
-  color: #159e94;
-  font-size: 17px;
+.etapa5-erro {
+  margin: 8px 0 0;
+  color: #c0392b;
+  font-size: 11px;
+  font-weight: 600;
 }
 
 .etapa5-lateral {
   display: flex;
   flex-direction: column;
-  gap: 13px;
+  gap: 14px;
 }
 
 .etapa5-requisitos,
 .etapa5-economia,
 .etapa5-concluir-card {
-  padding: 15px;
-  border: 1px solid #e4efec;
-  border-radius: 12px;
-  background: #fff;
+  padding: 16px 18px;
+  border: 1px solid var(--e5-borda);
+  border-radius: 14px;
+  background: #ffffff;
+}
+
+.etapa5-requisitos {
+  border-color: #a7ded6;
 }
 
 .etapa5-lateral h3 {
-  margin: 0 0 10px;
-  color: #193b59;
-  font-size: 12px;
+  margin: 0 0 12px;
+  color: var(--e5-titulo);
+  font-size: 15px;
+  font-weight: 700;
 }
 
 .etapa5-requisitos ul {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 11px;
   margin: 0;
   padding: 0;
   list-style: none;
-}
-
-/* Ícones da lista de requisitos: todos iguais (22x22, cantos arredondados) */
-.etapa5-requisitos ul {
-  gap: 12px;
 }
 
 .etapa5-requisitos li {
   display: flex;
   align-items: center;
   gap: 10px;
-  color: #4f6a80;
-  font-size: 12px;
+  color: var(--e5-texto);
+  font-size: 11.5px;
   line-height: 1.4;
 }
 
 .etapa5-requisitos li > span {
   display: inline-flex;
-  flex: 0 0 15px;
+  flex: 0 0 16px;
   align-items: center;
   justify-content: center;
-  width: 15px;
-  height: 15px;
-  border-radius: 3px;
+  width: 16px;
+  height: 16px;
+  border-radius: 4px;
   background: #eef2f6;
   color: #8a9bad;
   font-size: 12px;
@@ -483,103 +468,110 @@
 }
 
 .etapa5-requisitos li.atendido > span {
-  background: #1f9d63;
-  color: #fff;
+  background: var(--e5-verde);
+  color: #ffffff;
 }
 
 .etapa5-requisitos li.nao-atendido > span {
-  background: #d97736;
-  color: #fff;
+  background: var(--e5-laranja);
+  color: #ffffff;
 }
 
 .etapa5-requisitos-resumo {
-  margin-top: 11px;
-  padding: 8px;
-  border-radius: 6px;
+  margin-top: 14px;
+  padding: 9px 12px;
+  border-radius: 8px;
   background: #fff7e9;
   color: #946b26;
-  font-size: 9px;
+  font-size: 10.5px;
   line-height: 1.5;
 }
 
 .etapa5-requisitos-resumo.completo {
-  background: #e6f6ee;
-  color: #299b63;
-}
-
-.etapa5-economia {
-  padding: 15px;
+  background: var(--e5-verde-claro);
+  color: var(--e5-verde);
 }
 
 .etapa5-valor-economia {
-  color: #193b79;
-  font-size: 24px;
+  color: var(--e5-titulo);
+  font-size: 28px;
   font-weight: 800;
   letter-spacing: -0.7px;
 }
 
 .etapa5-valor-economia small {
-  color: #8192a4;
-  font-size: 10px;
+  color: var(--e5-texto-suave);
+  font-size: 12px;
   font-weight: 400;
   letter-spacing: 0;
 }
 
 .etapa5-economia p {
-  margin: 5px 0 11px;
-  color: #71869a;
-  font-size: 9px;
+  margin: 6px 0 14px;
+  color: var(--e5-texto-suave);
+  font-size: 10px;
+  line-height: 1.5;
 }
 
 .etapa5-economia button {
   width: 100%;
-  min-height: 34px;
-  border: 1px solid #159e94;
-  border-radius: 7px;
-  background: #fff;
-  color: #159e94;
-  font-size: 10px;
+  height: 38px;
+  border: 1.5px solid var(--e5-primaria);
+  border-radius: 10px;
+  background: #ffffff;
+  color: var(--e5-primaria-escura);
+  font-size: 12px;
+  font-weight: 600;
   cursor: pointer;
 }
 
 .etapa5-economia button:hover {
-  background: #e9f7f5;
+  background: var(--e5-primaria-clara);
 }
 
 .etapa5-concluir-card {
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  padding: 15px;
-  border-color: #d7efea;
-  background: #eaf7f4;
+  gap: 10px;
+  border-color: #d3ece7;
+  background: #eaf6f3;
 }
 
 .etapa5-concluir-card button {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 6px;
+  gap: 8px;
   width: 100%;
-  min-height: 39px;
-  border: 0;
-  border-radius: 7px;
-  background: #159e94;
-  color: #fff;
-  font-size: 11px;
-  font-weight: 700;
+  height: 40px;
+  border: none;
+  border-radius: 10px;
+  background: var(--e5-primaria);
+  color: #ffffff;
+  font-size: 13px;
+  font-weight: 600;
   cursor: pointer;
+  transition: background 0.2s;
+}
+
+.etapa5-concluir-card button:hover:not(:disabled) {
+  background: var(--e5-primaria-escura);
+}
+
+.etapa5-concluir-card button svg {
+  width: 16px;
+  height: 16px;
 }
 
 .etapa5-concluir-card button:disabled {
-  background: #d5e4e6;
-  color: #849ba9;
+  background: #d3dfe4;
+  color: #8aa0ae;
   cursor: not-allowed;
 }
 
 .etapa5-concluir-card > span {
-  color: #71869a;
-  font-size: 9px;
+  color: var(--e5-texto-suave);
+  font-size: 10px;
   line-height: 1.5;
   text-align: center;
 }
@@ -592,6 +584,7 @@
   .etapa5-lateral {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-items: start;
   }
 
   .etapa5-concluir-card {
@@ -600,29 +593,7 @@
 }
 
 @media (max-width: 650px) {
-  .etapa5-header {
-    gap: 12px;
-    padding: 0 15px;
-  }
-
-  .etapa5-logo {
-    min-width: auto;
-  }
-
-  .etapa5-breadcrumb {
-    display: none;
-  }
-
-  .etapa5-header-acoes {
-    gap: 8px;
-    margin-left: auto;
-  }
-
-  .etapa5-sidebar {
-    display: none;
-  }
-
-  .etapa5-main {
+  .etapa5-layout {
     padding: 17px 13px 30px;
   }
 
@@ -635,37 +606,16 @@
   }
 }
 
-@media (max-width: 460px) {
+@media (max-width: 560px) {
   .etapa5-form-grid {
     grid-template-columns: minmax(0, 1fr);
   }
 
   .etapa5-card {
-    padding: 13px;
+    padding: 14px;
   }
 
   .etapa5-progresso-interno {
     gap: 7px;
   }
-}
-.etapa5-erro {
-  margin: 8px 0 0;
-  color: #c0392b;
-  font-size: 11px;
-  font-weight: 600;
-}
-
-.etapa5-remover {
-  margin-top: 8px;
-  border: 0;
-  background: transparent;
-  color: #708398;
-  font-size: 11px;
-  text-decoration: underline;
-  cursor: pointer;
-}
-
-.etapa5-upload.arrastando {
-  border-color: #159e94;
-  background: #e8f7f5;
 }

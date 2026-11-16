@@ -1,0 +1,91 @@
+.overview-step-current .overview-step-icon svg path {
+  stroke: #ffffff;
+}
+
+.overview-step.overview-step-concluida {
+  background: #f1f9f7;
+  border: 2px solid #9fd3c9;
+}
+
+.overview-step.overview-step-concluida .overview-step-icon {
+  color: #ffffff;
+  background: #16a095;
+  border-color: #cdeae4;
+  box-shadow: 0 0 0 6px #d9f0ec;
+}
+
+.overview-step-concluida .overview-step-icon svg path {
+  stroke: #ffffff;
+}
+
+.overview-step.overview-step-concluida .overview-step-number {
+  color: #ffffff;
+  background: #16a095;
+}
+
+.overview-step-number svg {
+  width: 14px;
+  height: 14px;
+  vertical-align: middle;
+}
+
+.overview-step-acoes {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.overview-done-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: #0f7a70;
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.overview-done-label::before {
+  content: '';
+  width: 8px;
+  height: 8px;
+  background: #16a095;
+  border-radius: 50%;
+}
+
+.overview-review {
+  height: 36px;
+  padding: 0 16px;
+  color: #16a095;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  background: #ffffff;
+  border: 1px solid #16a095;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.overview-review:hover {
+  background: #e9f7f4;
+}
+
+.overview-review:focus-visible {
+  outline: 3px solid rgba(22, 160, 149, 0.35);
+  outline-offset: 2px;
+}
+
+.overview-soon {
+  padding: 4px 12px;
+  color: #6b7f99;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+  background: #eef2f6;
+  border-radius: 999px;
+}
+
+.overview-step.overview-step-embreve {
+  opacity: 0.85;
+}

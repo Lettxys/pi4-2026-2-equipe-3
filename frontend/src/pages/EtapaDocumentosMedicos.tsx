@@ -11,15 +11,30 @@ import {
   temToken,
   validarEtapa,
 } from '../services/api';
+import {
+  listarDocumentosDaEtapa,
+  paraArquivo,
+  salvarDocumento,
+} from '../services/documentosSalvos';
+import { montarPerfil, proximaEtapaComTela } from '../services/regrasPerfil';
+import type {
+  ChaveEtapaPerfil,
+  RespostasPerfil,
+} from '../services/regrasPerfil';
+import {
+  atualizarRespostasAtivas,
+  lerRespostasAtivas,
+} from '../services/respostasPerfil';
 
 import './EtapaIdentificacao.css';
 import './EtapaConcluida.css';
+import './EtapaLaudo.css';
 
 interface EtapaDocumentosMedicosProps {
   aoSair: () => void | Promise<void>;
   voltarTrilha: () => void;
   aoConcluir?: () => void;
-  aoComecarProximaEtapa?: () => void;
+  aoComecarProximaEtapa?: (chave?: ChaveEtapaPerfil) => void;
   aoEtapaConcluida?: () => void;
   aoNavegar?: (destino: DestinoMenu) => void;
   categoria?: string;
@@ -32,6 +47,7 @@ interface Documento {
   id: string;
   titulo: string;
   descricao: string;
+  opcional?: boolean;
   status: StatusDocumento;
   progresso: number;
   arquivo: File | null;
@@ -43,20 +59,50 @@ interface ModeloDocumento {
   id: string;
   titulo: string;
   descricao: string;
+  opcional?: boolean;
 }
 
-const NUMERO_ETAPA = 2;
+const NUMERO_ETAPA_BACKEND = 2;
+const ETAPA_DOCUMENTOS = 'documentos-medicos';
+const TITULO_ETAPA_DOCUMENTOS = 'Documentos médicos';
+
+const DIAS_LAUDO_ANTIGO = 180;
+const DIAS_ATENCAO = 150;
+const MS_POR_DIA = 24 * 60 * 60 * 1000;
 
 const TIPOS_ACEITOS = ['application/pdf', 'image/jpeg', 'image/png'];
 const EXTENSOES_ACEITAS = ['pdf', 'jpg', 'jpeg', 'png'];
-const TAMANHO_MAXIMO = 2 * 1024 * 1024; // 2 MB
-const TEMPO_AVISO = 4000; // ms
+const TAMANHO_MAXIMO = 2 * 1024 * 1024;
+const TEMPO_AVISO = 4000;
 
 const DICAS = [
   'Confira se o laudo traz o CID e a descrição da deficiência.',
   'Veja se o documento está dentro do prazo de validade.',
   'Fotografe com boa luz e sem cortar as bordas do documento.',
   'Utilize algum aplicativo de digitalizar foto.',
+];
+
+const GUIA_PASSOS = [
+  {
+    titulo: 'Procure um serviço de saúde',
+    descricao:
+      'O laudo deve ser emitido por uma instituição de saúde do SUS (pública ou conveniada) ou pelo Detran-CE.',
+  },
+  {
+    titulo: 'Peça o laudo para a isenção',
+    descricao:
+      'Explique ao médico que o laudo é para isenção de impostos na compra de um veículo. Leve seus documentos e os exames que você já tiver.',
+  },
+  {
+    titulo: 'Confira o que o laudo precisa ter',
+    descricao:
+      'Ele deve trazer o CID, a descrição da deficiência e dizer se a incapacidade é reversível ou não.',
+  },
+  {
+    titulo: 'Volte aqui com o laudo em mãos',
+    descricao:
+      'Quando estiver com o laudo, toque em "Já tenho meu laudo" para liberar o envio.',
+  },
 ];
 
 const DOCUMENTOS_DO_BACKEND: Record<string, ModeloDocumento> = {
@@ -74,14 +120,19 @@ const DOCUMENTOS_DO_BACKEND: Record<string, ModeloDocumento> = {
   },
 };
 
-const DOCUMENTOS_BASE: ModeloDocumento[] = [
-  {
-    id: 'laudo',
-    titulo: 'Laudo médico',
-    descricao:
-      'Laudo com CID e caracterização da deficiência, dentro do prazo de validade.',
-  },
-];
+const DOCUMENTO_LAUDO: ModeloDocumento = {
+  id: 'laudo',
+  titulo: 'Laudo médico',
+  descricao:
+    'Laudo com CID e caracterização da deficiência, dentro do prazo de validade.',
+};
+
+const DOCUMENTO_LAUDO_VISUAL: ModeloDocumento = {
+  id: 'laudo',
+  titulo: 'Laudo oftalmológico',
+  descricao:
+    'Laudo oftalmológico com caracterização da deficiência, dentro do prazo de validade.',
+};
 
 const DOCUMENTOS_POR_CATEGORIA: Record<string, ModeloDocumento[]> = {
   auditiva: [
@@ -91,13 +142,31 @@ const DOCUMENTOS_POR_CATEGORIA: Record<string, ModeloDocumento[]> = {
       descricao: 'Exame que comprova a perda auditiva bilateral.',
     },
   ],
- 
+  intelectual: [
+    {
+      id: 'responsavel-legal',
+      titulo: 'Documento do responsável legal',
+      descricao:
+        'Envie se a pessoa tiver curador ou responsável legal. Se não houver, pode pular.',
+      opcional: true,
+    },
+  ],
+  autismo: [
+    {
+      id: 'responsavel-legal',
+      titulo: 'Documento do responsável legal',
+      descricao:
+        'Envie se a pessoa tiver curador ou responsável legal. Se não houver, pode pular.',
+      opcional: true,
+    },
+  ],
 };
 
 function documentosDaCategoria(categoria?: string): ModeloDocumento[] {
+  const laudo = categoria === 'visual' ? DOCUMENTO_LAUDO_VISUAL : DOCUMENTO_LAUDO;
   const extras = categoria ? DOCUMENTOS_POR_CATEGORIA[categoria] ?? [] : [];
 
-  return [...DOCUMENTOS_BASE, ...extras];
+  return [laudo, ...extras];
 }
 
 function criarDocumentos(modelos: ModeloDocumento[]): Documento[] {
@@ -116,6 +185,37 @@ function formatarTamanho(bytes: number): string {
   }
 
   return `${Math.max(1, Math.round(bytes / 1024))} KB`;
+}
+
+function dataDeHoje(): string {
+  const agora = new Date();
+  const mes = String(agora.getMonth() + 1).padStart(2, '0');
+  const dia = String(agora.getDate()).padStart(2, '0');
+
+  return `${agora.getFullYear()}-${mes}-${dia}`;
+}
+
+function calcularDias(emissao: string): number | null {
+  if (!emissao) {
+    return null;
+  }
+
+  const data = new Date(`${emissao}T00:00:00`);
+
+  if (Number.isNaN(data.getTime())) {
+    return null;
+  }
+
+  const hoje = new Date();
+  hoje.setHours(0, 0, 0, 0);
+
+  const dias = Math.round((hoje.getTime() - data.getTime()) / MS_POR_DIA);
+
+  return dias < 0 ? null : dias;
+}
+
+function textoDias(dias: number): string {
+  return `${dias} ${dias === 1 ? 'dia' : 'dias'}`;
 }
 
 function IconeDocumento() {
@@ -275,6 +375,102 @@ function IconeCheckPequeno() {
   );
 }
 
+function MedidorValidade() {
+  const [emissao, setEmissao] = useState('');
+
+  const dias = calcularDias(emissao);
+  const situacao =
+    dias === null
+      ? null
+      : dias >= DIAS_LAUDO_ANTIGO
+        ? 'vencido'
+        : dias >= DIAS_ATENCAO
+          ? 'atencao'
+          : 'ok';
+  const percentual =
+    dias === null ? 0 : Math.min(100, Math.round((dias / DIAS_LAUDO_ANTIGO) * 100));
+  const restam = dias === null ? 0 : DIAS_LAUDO_ANTIGO - dias;
+
+  let mensagem = 'Informe a data para ver se o laudo ainda está dentro do prazo.';
+
+  if (situacao === 'ok') {
+    mensagem = `Dentro do prazo. Ele passa a ser considerado antigo com ${DIAS_LAUDO_ANTIGO} dias.`;
+  }
+
+  if (situacao === 'atencao') {
+    mensagem = `Atenção: em ${textoDias(restam)} este laudo passa a ser considerado antigo.`;
+  }
+
+  if (situacao === 'vencido') {
+    mensagem = `Este laudo passou de ${DIAS_LAUDO_ANTIGO} dias e é considerado antigo. Emita um novo antes de enviar.`;
+  }
+
+  return (
+    <section
+      className={`etapa-medidor${situacao ? ` etapa-medidor-${situacao}` : ''}`}
+    >
+      <h2>Medidor de validade do laudo</h2>
+
+      <p>
+        Informe quando o laudo foi emitido. Assim conferimos se ele ainda está
+        dentro do prazo.
+      </p>
+
+      <label className="etapa-medidor-campo">
+        Data de emissão do laudo
+        <input
+          type="date"
+          value={emissao}
+          max={dataDeHoje()}
+          onChange={(event) => setEmissao(event.target.value)}
+        />
+      </label>
+
+      <div
+        className="etapa-medidor-barra"
+        role="progressbar"
+        aria-label="Idade do laudo em dias"
+        aria-valuemin={0}
+        aria-valuemax={DIAS_LAUDO_ANTIGO}
+        aria-valuenow={Math.min(dias ?? 0, DIAS_LAUDO_ANTIGO)}
+      >
+        <span style={{ width: `${percentual}%` }} />
+      </div>
+
+      <div className="etapa-medidor-escala">
+        <span>Emitido hoje</span>
+        <span>{DIAS_LAUDO_ANTIGO} dias</span>
+      </div>
+
+      <p className="etapa-medidor-texto" role="status">
+        {dias !== null && <strong>Seu laudo tem {textoDias(dias)}. </strong>}
+        {mensagem}
+      </p>
+    </section>
+  );
+}
+
+function GuiaLaudo({ aoTenhoLaudo }: { aoTenhoLaudo: () => void }) {
+  return (
+    <section className="etapa-guia">
+      <ol>
+        {GUIA_PASSOS.map((passo) => (
+          <li key={passo.titulo}>
+            <div>
+              <h2>{passo.titulo}</h2>
+              <p>{passo.descricao}</p>
+            </div>
+          </li>
+        ))}
+      </ol>
+
+      <button type="button" className="etapa-guia-botao" onClick={aoTenhoLaudo}>
+        Já tenho meu laudo
+      </button>
+    </section>
+  );
+}
+
 export default function EtapaDocumentosMedicos({
   aoSair,
   voltarTrilha,
@@ -283,13 +479,19 @@ export default function EtapaDocumentosMedicos({
   aoEtapaConcluida,
   aoNavegar,
   categoria,
-  totalEtapas = 6,
+  totalEtapas: totalEtapasInformado,
 }: EtapaDocumentosMedicosProps) {
+  const [respostas, setRespostas] = useState<RespostasPerfil | null>(
+    lerRespostasAtivas
+  );
+
+  const categoriaEfetiva = categoria ?? respostas?.categoria;
+
   const [modelos, setModelos] = useState<ModeloDocumento[]>(() =>
-    documentosDaCategoria(categoria)
+    documentosDaCategoria(categoriaEfetiva)
   );
   const [documentos, setDocumentos] = useState<Documento[]>(() =>
-    criarDocumentos(documentosDaCategoria(categoria))
+    criarDocumentos(documentosDaCategoria(categoriaEfetiva))
   );
   const [processId, setProcessId] = useState<number | null>(null);
   const [carregando, setCarregando] = useState(temToken());
@@ -306,6 +508,23 @@ export default function EtapaDocumentosMedicos({
   const botaoProximaEtapa = useRef<HTMLButtonElement | null>(null);
 
   const modoReal = processId !== null;
+  const modoGuia = respostas?.laudo === 'ainda-nao';
+  const laudoAntigo = respostas?.laudo === 'antigo';
+
+  const etapasDoPerfil = montarPerfil(respostas ?? {}).etapas;
+  const posicaoNoPerfil = etapasDoPerfil.findIndex(
+    (etapa) =>
+      etapa.chave === 'documentos-medicos' || etapa.chave === 'obter-laudo'
+  );
+  const numeroEtapa =
+    posicaoNoPerfil >= 0 ? posicaoNoPerfil + 1 : NUMERO_ETAPA_BACKEND;
+  const totalEtapas = totalEtapasInformado ?? etapasDoPerfil.length;
+  const proxima = proximaEtapaComTela(
+    etapasDoPerfil,
+    modoGuia ? 'obter-laudo' : 'documentos-medicos'
+  );
+  const numeroProxima = proxima ? proxima.numero : numeroEtapa + 1;
+  const tituloProxima = proxima ? proxima.etapa.titulo : '';
 
   useEffect(() => {
     if (!temToken()) {
@@ -336,10 +555,25 @@ export default function EtapaDocumentosMedicos({
         }
 
         const reais = tipos.map((tipo) => DOCUMENTOS_DO_BACKEND[tipo]);
+        const itensPorTipo = new Map(
+          checklist.map((item) => [item.documentType, item] as const)
+        );
+
+        const iniciais = criarDocumentos(reais).map((doc) => {
+          const item = itensPorTipo.get(doc.id);
+          const enviado =
+            Boolean(item?.isUploaded) &&
+            item?.status !== 'REJECTED' &&
+            item?.status !== 'EXPIRED';
+
+          return enviado
+            ? { ...doc, status: 'conferido' as const, progresso: 100 }
+            : doc;
+        });
 
         setProcessId(eu.activeProcessId);
         setModelos(reais);
-        setDocumentos(criarDocumentos(reais));
+        setDocumentos(iniciais);
       } catch {
       } finally {
         if (ativo) {
@@ -354,6 +588,45 @@ export default function EtapaDocumentosMedicos({
       ativo = false;
     };
   }, []);
+
+  useEffect(() => {
+    if (carregando) {
+      return;
+    }
+
+    let ativo = true;
+
+    void listarDocumentosDaEtapa(ETAPA_DOCUMENTOS).then((salvos) => {
+      if (!ativo || salvos.length === 0) {
+        return;
+      }
+
+      setDocumentos((atual) =>
+        atual.map((doc) => {
+          const salvo = salvos.find((item) => item.documentoId === doc.id);
+          const semArquivo =
+            doc.status === 'pendente' ||
+            (doc.status === 'conferido' && !doc.arquivo);
+
+          if (!salvo || !semArquivo) {
+            return doc;
+          }
+
+          return {
+            ...doc,
+            status: 'conferido',
+            progresso: 100,
+            arquivo: paraArquivo(salvo),
+            erro: '',
+          };
+        })
+      );
+    });
+
+    return () => {
+      ativo = false;
+    };
+  }, [carregando]);
 
   useEffect(() => {
     const ativos = temporizadores.current;
@@ -384,10 +657,15 @@ export default function EtapaDocumentosMedicos({
     };
   }, [etapaConcluida]);
 
-  const conferidos = documentos.filter((doc) => doc.status === 'conferido').length;
-  const total = documentos.length;
+  const obrigatorios = documentos.filter((doc) => !doc.opcional);
+  const conferidos = obrigatorios.filter(
+    (doc) => doc.status === 'conferido'
+  ).length;
+  const total = obrigatorios.length;
   const porcentagem = total > 0 ? Math.round((conferidos / total) * 100) : 0;
   const faltam = total - conferidos;
+  const temOpcional = documentos.some((doc) => doc.opcional);
+  const enviandoAlgum = documentos.some((doc) => doc.status === 'enviando');
 
   function atualizarDocumento(id: string, mudancas: Partial<Documento>) {
     setDocumentos((atual) =>
@@ -437,6 +715,13 @@ export default function EtapaDocumentosMedicos({
         pararEnvio(id);
         atualizarDocumento(id, { status: 'conferido', progresso: 100 });
         mostrarAviso(`${tituloDoDocumento(id)} conferido`);
+        void salvarDocumento({
+          etapa: ETAPA_DOCUMENTOS,
+          etapaTitulo: TITULO_ETAPA_DOCUMENTOS,
+          documentoId: id,
+          titulo: tituloDoDocumento(id),
+          arquivo,
+        });
         return;
       }
 
@@ -474,6 +759,13 @@ export default function EtapaDocumentosMedicos({
       pararEnvio(id);
       atualizarDocumento(id, { status: 'conferido', progresso: 100 });
       mostrarAviso(`${tituloDoDocumento(id)} conferido`);
+      void salvarDocumento({
+        etapa: ETAPA_DOCUMENTOS,
+        etapaTitulo: TITULO_ETAPA_DOCUMENTOS,
+        documentoId: id,
+        titulo: tituloDoDocumento(id),
+        arquivo,
+      });
     } catch (error) {
       if (envios.current[id] !== numeroEnvio) {
         return;
@@ -579,8 +871,14 @@ export default function EtapaDocumentosMedicos({
     window.open(endereco, '_blank', 'noopener');
   }
 
+  function jaTenhoLaudo() {
+    atualizarRespostasAtivas({ laudo: 'recente' });
+    setRespostas(lerRespostasAtivas());
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
   async function concluirEtapa() {
-    if (faltam > 0 || concluindo) {
+    if (faltam > 0 || enviandoAlgum || concluindo) {
       return;
     }
 
@@ -590,7 +888,7 @@ export default function EtapaDocumentosMedicos({
       setConcluindo(true);
 
       try {
-        const resultado = await validarEtapa(processId, NUMERO_ETAPA);
+        const resultado = await validarEtapa(processId, NUMERO_ETAPA_BACKEND);
 
         if (!resultado.isValidated) {
           const mensagens = resultado.validationErrors
@@ -625,7 +923,13 @@ export default function EtapaDocumentosMedicos({
 
   function comecarProximaEtapa() {
     setEtapaConcluida(false);
-    (aoComecarProximaEtapa ?? aoConcluir ?? voltarTrilha)();
+
+    if (proxima && aoComecarProximaEtapa) {
+      aoComecarProximaEtapa(proxima.etapa.chave);
+      return;
+    }
+
+    (aoConcluir ?? voltarTrilha)();
   }
 
   const textoStatus: Record<StatusDocumento, string> = {
@@ -640,7 +944,10 @@ export default function EtapaDocumentosMedicos({
       aoSair={aoSair}
       aoNavegar={aoNavegar}
       itemAtivo="processo"
-      caminho={['Meu processo', 'Etapa 2 · Documentos médicos']}
+      caminho={[
+        'Meu processo',
+        `Etapa ${numeroEtapa} · ${modoGuia ? 'Como conseguir seu laudo' : 'Documentos médicos'}`,
+      ]}
     >
       {aviso && (
         <div className="etapa-toast" role="status">
@@ -662,204 +969,252 @@ export default function EtapaDocumentosMedicos({
             className="etapa-passos"
             role="progressbar"
             aria-label="Etapas do processo"
-            aria-valuenow={NUMERO_ETAPA}
+            aria-valuenow={numeroEtapa}
             aria-valuemin={1}
             aria-valuemax={totalEtapas}
           >
             {Array.from({ length: totalEtapas }, (_, indice) => (
               <span
                 key={indice}
-                className={indice < NUMERO_ETAPA ? 'ativo' : ''}
+                className={indice < numeroEtapa ? 'ativo' : ''}
               />
             ))}
           </div>
 
           <p className="etapa-rotulo">
-            ETAPA {NUMERO_ETAPA} DE {totalEtapas}
+            ETAPA {numeroEtapa} DE {totalEtapas}
           </p>
 
           <h1 className="etapa-titulo">
-            Documentos médicos: <span>laudos e exames</span>
+            {modoGuia ? (
+              <>
+                Como conseguir seu <span>laudo médico</span>
+              </>
+            ) : (
+              <>
+                Documentos médicos: <span>laudos e exames</span>
+              </>
+            )}
           </h1>
 
           <p className="etapa-subtitulo">
-            Envie {total === 1 ? 'o documento' : `os ${total} documentos`}{' '}
-            abaixo para liberar a etapa {NUMERO_ETAPA + 1}. Seu progresso é
-            salvo automaticamente.
+            {modoGuia ? (
+              'Você ainda não tem o laudo. Siga os passos abaixo e, quando estiver com ele em mãos, volte para enviar.'
+            ) : (
+              <>
+                Envie {total === 1 ? 'o documento' : `os ${total} documentos`}{' '}
+                abaixo para liberar a etapa {numeroProxima}.
+                {temOpcional ? ' O documento do responsável legal é opcional.' : ''}{' '}
+                Seu progresso é salvo automaticamente.
+              </>
+            )}
           </p>
 
-          <div className="etapa-progresso">
-            <strong>
-              {conferidos} de {total} conferidos
-            </strong>
-
-            <div
-              className="etapa-progresso-barra"
-              role="progressbar"
-              aria-label="Documentos conferidos"
-              aria-valuenow={porcentagem}
-              aria-valuemin={0}
-              aria-valuemax={100}
-            >
-              <span style={{ width: `${porcentagem}%` }} />
-            </div>
-
-            <strong className="etapa-progresso-pct">{porcentagem}%</strong>
-          </div>
-
-          {carregando ? (
-            <p className="etapa-subtitulo">Carregando documentos...</p>
+          {modoGuia ? (
+            <GuiaLaudo aoTenhoLaudo={jaTenhoLaudo} />
           ) : (
-            <div className="etapa-documentos">
-              {documentos.map((doc) => (
-                <article
-                  key={doc.id}
-                  className={`etapa-doc etapa-doc-${doc.status}`}
+            <>
+              {laudoAntigo && <MedidorValidade />}
+
+              <div className="etapa-progresso">
+                <strong>
+                  {conferidos} de {total} conferidos
+                </strong>
+
+                <div
+                  className="etapa-progresso-barra"
+                  role="progressbar"
+                  aria-label="Documentos conferidos"
+                  aria-valuenow={porcentagem}
+                  aria-valuemin={0}
+                  aria-valuemax={100}
                 >
-                  <div className="etapa-doc-icone">
-                    <IconeDocumento />
-                  </div>
+                  <span style={{ width: `${porcentagem}%` }} />
+                </div>
 
-                  <div className="etapa-doc-topo">
-                    <div>
-                      <h2>{doc.titulo}</h2>
-                      <p>{doc.descricao}</p>
-                    </div>
+                <strong className="etapa-progresso-pct">{porcentagem}%</strong>
+              </div>
 
-                    <span className={`etapa-selo etapa-selo-${doc.status}`}>
-                      {doc.status === 'conferido' && <IconeCheckPequeno />}
-                      {textoStatus[doc.status]}
-                    </span>
-                  </div>
-
-                  <div className="etapa-doc-corpo">
-                    <input
-                      ref={(elemento) => {
-                        seletores.current[doc.id] = elemento;
-                      }}
-                      type="file"
-                      className="etapa-arquivo-oculto"
-                      onChange={(event) => aoEscolherArquivo(doc.id, event)}
-                      tabIndex={-1}
-                      aria-hidden="true"
-                    />
-
-                    {doc.status === 'conferido' && doc.arquivo && (
-                      <div className="etapa-arquivo">
-                        <span className="etapa-arquivo-check">
-                          <IconeCheckCirculo />
-                        </span>
-
-                        <span className="etapa-arquivo-nome">
-                          {doc.arquivo.name} · {formatarTamanho(doc.arquivo.size)}
-                        </span>
-
-                        {doc.emitidoEm && (
-                          <span className="etapa-arquivo-data">
-                            Emitido em {doc.emitidoEm}
-                          </span>
-                        )}
-
-                        <button
-                          type="button"
-                          className="etapa-link"
-                          onClick={() => verArquivo(doc.arquivo)}
-                        >
-                          Ver
-                        </button>
-
-                        <button
-                          type="button"
-                          className="etapa-link"
-                          onClick={() => abrirSeletor(doc.id)}
-                        >
-                          Substituir
-                        </button>
+              {carregando ? (
+                <p className="etapa-subtitulo">Carregando documentos...</p>
+              ) : (
+                <div className="etapa-documentos">
+                  {documentos.map((doc) => (
+                    <article
+                      key={doc.id}
+                      className={`etapa-doc etapa-doc-${doc.status}`}
+                    >
+                      <div className="etapa-doc-icone">
+                        <IconeDocumento />
                       </div>
-                    )}
 
-                    {doc.status === 'enviando' && doc.arquivo && (
-                      <div className="etapa-envio">
-                        <div className="etapa-envio-linha">
-                          <span className="etapa-envio-nome">
-                            Enviando {doc.arquivo.name} · {formatarTamanho(doc.arquivo.size)}
-                          </span>
-                          <strong>{doc.progresso}%</strong>
+                      <div className="etapa-doc-topo">
+                        <div>
+                          <h2>
+                            {doc.titulo}
+                            {doc.opcional && (
+                              <span className="etapa-opcional"> · opcional</span>
+                            )}
+                          </h2>
+                          <p>{doc.descricao}</p>
                         </div>
 
-                        <div className="etapa-envio-barra">
-                          <span style={{ width: `${doc.progresso}%` }} />
-                        </div>
-
-                        <div className="etapa-envio-linha">
-                          <span className="etapa-envio-info">
-                            Conferindo formato, tamanho e data...
-                          </span>
-                          <button
-                            type="button"
-                            className="etapa-cancelar"
-                            onClick={() => cancelarEnvio(doc.id)}
-                          >
-                            Cancelar
-                          </button>
-                        </div>
+                        <span className={`etapa-selo etapa-selo-${doc.status}`}>
+                          {doc.status === 'conferido' && <IconeCheckPequeno />}
+                          {textoStatus[doc.status]}
+                        </span>
                       </div>
-                    )}
 
-                    {doc.status === 'erro' && (
-                      <>
-                        <div className="etapa-erro-caixa" role="alert">
-                          <IconeAlerta />
-                          <p>{doc.erro}</p>
-                        </div>
-
-                        <button
-                          type="button"
-                          className="etapa-botao-outro"
-                          onClick={() => abrirSeletor(doc.id)}
-                        >
-                          Enviar outro arquivo
-                        </button>
-                      </>
-                    )}
-
-                    {doc.status === 'pendente' && (
-                      <>
-                        <ul className="etapa-formatos">
-                          <li>PDF, JPG ou PNG</li>
-                          <li>Até 2 MB</li>
-                          <li>Legível e completo</li>
-                        </ul>
-
-                        <div
-                          className={`etapa-soltar${
-                            arrastando === doc.id ? ' arrastando' : ''
-                          }`}
-                          onDragOver={(event) => {
-                            event.preventDefault();
-                            setArrastando(doc.id);
+                      <div className="etapa-doc-corpo">
+                        <input
+                          ref={(elemento) => {
+                            seletores.current[doc.id] = elemento;
                           }}
-                          onDragLeave={() => setArrastando('')}
-                          onDrop={(event) => aoSoltar(doc.id, event)}
-                        >
-                          <IconeUpload />
+                          type="file"
+                          className="etapa-arquivo-oculto"
+                          onChange={(event) => aoEscolherArquivo(doc.id, event)}
+                          tabIndex={-1}
+                          aria-hidden="true"
+                        />
 
-                          <span>
-                            Arraste o arquivo aqui ou{' '}
+                        {doc.status === 'conferido' && doc.arquivo && (
+                          <div className="etapa-arquivo">
+                            <span className="etapa-arquivo-check">
+                              <IconeCheckCirculo />
+                            </span>
+
+                            <span className="etapa-arquivo-nome">
+                              {doc.arquivo.name} · {formatarTamanho(doc.arquivo.size)}
+                            </span>
+
+                            {doc.emitidoEm && (
+                              <span className="etapa-arquivo-data">
+                                Emitido em {doc.emitidoEm}
+                              </span>
+                            )}
+
                             <button
                               type="button"
+                              className="etapa-link"
+                              onClick={() => verArquivo(doc.arquivo)}
+                            >
+                              Ver
+                            </button>
+
+                            <button
+                              type="button"
+                              className="etapa-link"
                               onClick={() => abrirSeletor(doc.id)}
                             >
-                              selecione do computador
+                              Substituir
                             </button>
-                          </span>
-                        </div>
-                      </>
-                    )}
-                  </div>
-                </article>
-              ))}
-            </div>
+                          </div>
+                        )}
+
+                        {doc.status === 'conferido' && !doc.arquivo && (
+                          <div className="etapa-arquivo">
+                            <span className="etapa-arquivo-check">
+                              <IconeCheckCirculo />
+                            </span>
+
+                            <span className="etapa-arquivo-nome">
+                              Documento já enviado
+                            </span>
+
+                            <button
+                              type="button"
+                              className="etapa-link"
+                              onClick={() => abrirSeletor(doc.id)}
+                            >
+                              Substituir
+                            </button>
+                          </div>
+                        )}
+
+                        {doc.status === 'enviando' && doc.arquivo && (
+                          <div className="etapa-envio">
+                            <div className="etapa-envio-linha">
+                              <span className="etapa-envio-nome">
+                                Enviando {doc.arquivo.name} · {formatarTamanho(doc.arquivo.size)}
+                              </span>
+                              <strong>{doc.progresso}%</strong>
+                            </div>
+
+                            <div className="etapa-envio-barra">
+                              <span style={{ width: `${doc.progresso}%` }} />
+                            </div>
+
+                            <div className="etapa-envio-linha">
+                              <span className="etapa-envio-info">
+                                Conferindo formato, tamanho e data...
+                              </span>
+                              <button
+                                type="button"
+                                className="etapa-cancelar"
+                                onClick={() => cancelarEnvio(doc.id)}
+                              >
+                                Cancelar
+                              </button>
+                            </div>
+                          </div>
+                        )}
+
+                        {doc.status === 'erro' && (
+                          <>
+                            <div className="etapa-erro-caixa" role="alert">
+                              <IconeAlerta />
+                              <p>{doc.erro}</p>
+                            </div>
+
+                            <button
+                              type="button"
+                              className="etapa-botao-outro"
+                              onClick={() => abrirSeletor(doc.id)}
+                            >
+                              Enviar outro arquivo
+                            </button>
+                          </>
+                        )}
+
+                        {doc.status === 'pendente' && (
+                          <>
+                            <ul className="etapa-formatos">
+                              <li>PDF, JPG ou PNG</li>
+                              <li>Até 2 MB</li>
+                              <li>Legível e completo</li>
+                            </ul>
+
+                            <div
+                              className={`etapa-soltar${
+                                arrastando === doc.id ? ' arrastando' : ''
+                              }`}
+                              onDragOver={(event) => {
+                                event.preventDefault();
+                                setArrastando(doc.id);
+                              }}
+                              onDragLeave={() => setArrastando('')}
+                              onDrop={(event) => aoSoltar(doc.id, event)}
+                            >
+                              <IconeUpload />
+
+                              <span>
+                                Arraste o arquivo aqui ou{' '}
+                                <button
+                                  type="button"
+                                  onClick={() => abrirSeletor(doc.id)}
+                                >
+                                  selecione do computador
+                                </button>
+                              </span>
+                            </div>
+                          </>
+                        )}
+                      </div>
+                    </article>
+                  ))}
+                </div>
+              )}
+            </>
           )}
         </section>
 
@@ -874,39 +1229,41 @@ export default function EtapaDocumentosMedicos({
             </ul>
           </section>
 
-          <section className="etapa-concluir">
-            <h2>Concluir etapa</h2>
+          {!modoGuia && (
+            <section className="etapa-concluir">
+              <h2>Concluir etapa</h2>
 
-            <p>
-              Quando {total === 1 ? 'o documento estiver conferido' : `os ${total} documentos estiverem conferidos`}
-              , a etapa {NUMERO_ETAPA + 1} será liberada.
-            </p>
+              <p>
+                Quando {total === 1 ? 'o documento estiver conferido' : `os ${total} documentos estiverem conferidos`}
+                , a etapa {numeroProxima} será liberada.
+              </p>
 
-            <button
-              type="button"
-              className="etapa-concluir-botao"
-              disabled={faltam > 0 || concluindo || carregando}
-              onClick={() => void concluirEtapa()}
-            >
-              {faltam > 0 && <IconeCadeado />}
-              {concluindo ? 'Validando...' : `Concluir etapa ${NUMERO_ETAPA}`}
-            </button>
+              <button
+                type="button"
+                className="etapa-concluir-botao"
+                disabled={faltam > 0 || enviandoAlgum || concluindo || carregando}
+                onClick={() => void concluirEtapa()}
+              >
+                {faltam > 0 && <IconeCadeado />}
+                {concluindo ? 'Validando...' : `Concluir etapa ${numeroEtapa}`}
+              </button>
 
-            <span className="etapa-concluir-info">
-              {faltam > 0
-                ? `Faltam ${faltam} ${faltam === 1 ? 'documento' : 'documentos'}`
-                : 'Todos os documentos conferidos'}
-            </span>
+              <span className="etapa-concluir-info">
+                {faltam > 0
+                  ? `Faltam ${faltam} ${faltam === 1 ? 'documento' : 'documentos'}`
+                  : 'Todos os documentos conferidos'}
+              </span>
 
-            {erroEtapa && (
-              <div className="etapa-erro-caixa" role="alert">
-                <IconeAlerta />
-                <p>{erroEtapa}</p>
-              </div>
-            )}
-          </section>
+              {erroEtapa && (
+                <div className="etapa-erro-caixa" role="alert">
+                  <IconeAlerta />
+                  <p>{erroEtapa}</p>
+                </div>
+              )}
+            </section>
+          )}
 
-          {!carregando && !modoReal && (
+          {!carregando && !modoReal && !modoGuia && (
             <section className="etapa-aviso">
               <IconeInfo />
 
@@ -945,13 +1302,17 @@ export default function EtapaDocumentosMedicos({
             </span>
 
             <h2 id="etapa-concluida-titulo">
-              Etapa {NUMERO_ETAPA} concluída!
+              Etapa {numeroEtapa} concluída!
             </h2>
 
             <p className="etapa-concluida-texto">
               Seus documentos médicos foram conferidos.
               <br />
-              <strong>Etapa {NUMERO_ETAPA + 1}</strong> liberada.
+              <strong>
+                Etapa {numeroProxima}
+                {tituloProxima ? ` · ${tituloProxima}` : ''}
+              </strong>{' '}
+              liberada.
             </p>
 
             <div className="etapa-concluida-passos" aria-hidden="true">
@@ -959,9 +1320,9 @@ export default function EtapaDocumentosMedicos({
                 <span
                   key={indice}
                   className={
-                    indice < NUMERO_ETAPA
+                    indice < numeroEtapa
                       ? 'ativo'
-                      : indice === NUMERO_ETAPA
+                      : indice === numeroEtapa
                         ? 'proxima'
                         : ''
                   }
@@ -976,7 +1337,7 @@ export default function EtapaDocumentosMedicos({
                 className="etapa-concluida-primario"
                 onClick={comecarProximaEtapa}
               >
-                Começar etapa {NUMERO_ETAPA + 1}
+                Começar etapa {numeroProxima}
                 <IconeSetaDireita />
               </button>
 

@@ -341,6 +341,7 @@ export default function EtapaDocumentosMedicos({
         setModelos(reais);
         setDocumentos(criarDocumentos(reais));
       } catch {
+        // Falha esperada ao carregar o check-list: mantém o estado inicial.
       } finally {
         if (ativo) {
           setCarregando(false);

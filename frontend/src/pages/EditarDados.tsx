@@ -49,12 +49,18 @@ export default function EditarDados({
   const [salvando, setSalvando] = useState(false);
   const [erro, setErro] = useState('');
 
-  useEffect(() => {
+  const [abertoAnterior, setAbertoAnterior] = useState(aberto);
+  const [dadosAnteriores, setDadosAnteriores] = useState(dadosIniciais);
+
+  if (aberto !== abertoAnterior || dadosIniciais !== dadosAnteriores) {
+    setAbertoAnterior(aberto);
+    setDadosAnteriores(dadosIniciais);
+
     if (aberto) {
       setDados(dadosIniciais);
       setErro('');
     }
-  }, [aberto, dadosIniciais]);
+  }
 
   useEffect(() => {
     if (!aberto) return;

@@ -11,7 +11,10 @@ import VerificarCodigo from './pages/VerificarCodigo';
 import ResetPassword from './pages/ResetPassword';
 import Overview from './pages/Overview';
 import EtapaIdentificacao from './pages/EtapaIdentificacao';
+import EtapaRepresentante from './pages/EtapaRepresentante';
 import EtapaDocumentosMedicos from './pages/EtapaDocumentosMedicos';
+import EtapaCondutores from './pages/EtapaCondutores';
+import EtapaComprovacaoPerda from './pages/EtapaComprovacaoPerda';
 import EtapaRenda from './pages/EtapaRenda';
 import Documentos from './pages/Documentos';
 import type { DestinoMenu } from './components/PainelLayout';
@@ -29,7 +32,10 @@ import {
   limparEtapasConcluidas,
   marcarEtapaConcluida,
 } from './services/progressoEtapas';
-import { etapasAfetadasPorMudanca } from './services/regrasPerfil';
+import {
+  etapasAfetadasPorMudanca,
+  montarPerfil,
+} from './services/regrasPerfil';
 import type { ChaveEtapaPerfil, RespostasPerfil } from './services/regrasPerfil';
 import {
   ativarRespostasDoUsuario,
@@ -46,7 +52,10 @@ type Pagina =
   | 'quiz-perfil'
   | 'overview'
   | 'etapa-identificacao'
+  | 'etapa-representante'
   | 'etapa-documentos-medicos'
+  | 'etapa-condutores'
+  | 'etapa-comprovacao-perda'
   | 'etapa-renda'
   | 'etapa-veiculo'
   | 'etapa-revisao'
@@ -64,7 +73,10 @@ const PAGINAS_PROTEGIDAS: Pagina[] = [
   'quiz-perfil',
   'overview',
   'etapa-identificacao',
+  'etapa-representante',
   'etapa-documentos-medicos',
+  'etapa-condutores',
+  'etapa-comprovacao-perda',
   'etapa-renda',
   'etapa-veiculo',
   'etapa-revisao',
@@ -73,6 +85,10 @@ const PAGINAS_PROTEGIDAS: Pagina[] = [
 
 function ehProtegida(pagina: Pagina): boolean {
   return PAGINAS_PROTEGIDAS.includes(pagina);
+}
+
+function beneficiarioEhCondutor(): boolean {
+  return montarPerfil(lerRespostasAtivas() ?? {}).situacao === 'pcd-condutor';
 }
 
 function App() {
@@ -139,8 +155,12 @@ function App() {
 
   function abrirEtapa(chave?: ChaveEtapaPerfil) {
     if (chave === 'identificacao') irPara('etapa-identificacao');
+    else if (chave === 'representante') irPara('etapa-representante');
     else if (chave === 'documentos-medicos' || chave === 'obter-laudo')
       irPara('etapa-documentos-medicos');
+    else if (chave === 'condutores' || chave === 'minha-cnh')
+      irPara('etapa-condutores');
+    else if (chave === 'comprovacao-perda') irPara('etapa-comprovacao-perda');
     else if (chave === 'renda') irPara('etapa-renda');
     else if (chave === 'veiculo') irPara('etapa-veiculo');
     else if (chave === 'revisao') irPara('etapa-revisao');
@@ -260,6 +280,17 @@ function App() {
         />
       )}
 
+      {paginaAtual === 'etapa-representante' && (
+        <EtapaRepresentante
+          aoSair={deslogar}
+          voltarTrilha={() => irPara('overview')}
+          aoConcluir={() => irPara('overview')}
+          aoComecarProximaEtapa={abrirEtapa}
+          aoEtapaConcluida={() => marcarEtapaConcluida('representante')}
+          aoNavegar={navegar}
+        />
+      )}
+
       {paginaAtual === 'etapa-documentos-medicos' && (
         <EtapaDocumentosMedicos
           aoSair={deslogar}
@@ -271,14 +302,40 @@ function App() {
         />
       )}
 
+      {paginaAtual === 'etapa-condutores' && (
+        <EtapaCondutores
+          aoSair={deslogar}
+          voltarTrilha={() => irPara('overview')}
+          aoConcluir={() => irPara('overview')}
+          aoComecarProximaEtapa={abrirEtapa}
+          aoEtapaConcluida={() =>
+            marcarEtapaConcluida(
+              beneficiarioEhCondutor() ? 'minha-cnh' : 'condutores'
+            )
+          }
+          aoNavegar={navegar}
+          beneficiarioEhCondutor={beneficiarioEhCondutor()}
+        />
+      )}
+
+      {paginaAtual === 'etapa-comprovacao-perda' && (
+        <EtapaComprovacaoPerda
+          aoSair={deslogar}
+          voltarTrilha={() => irPara('overview')}
+          aoConcluir={() => irPara('overview')}
+          aoComecarProximaEtapa={abrirEtapa}
+          aoEtapaConcluida={() => marcarEtapaConcluida('comprovacao-perda')}
+          aoNavegar={navegar}
+        />
+      )}
+
       {paginaAtual === 'etapa-renda' && (
         <EtapaRenda
           aoSair={deslogar}
           voltarTrilha={() => irPara('overview')}
-          aoConcluir={() => {
-            marcarEtapaConcluida('renda');
-            irPara('overview');
-          }}
+          aoConcluir={() => irPara('overview')}
+          aoComecarEtapa2={abrirEtapa}
+          aoEtapaConcluida={() => marcarEtapaConcluida('renda')}
           aoNavegar={navegar}
         />
       )}
@@ -287,10 +344,9 @@ function App() {
         <EtapaVeiculo
           aoSair={deslogar}
           voltarTrilha={() => irPara('overview')}
-          aoConcluir={() => {
-            marcarEtapaConcluida('veiculo');
-            irPara('overview');
-          }}
+          aoConcluir={() => irPara('overview')}
+          aoComecarProximaEtapa={abrirEtapa}
+          aoEtapaConcluida={() => marcarEtapaConcluida('veiculo')}
           aoNavegar={navegar}
           abrirCalculadora={() => irPara('calculadora')}
         />
@@ -301,12 +357,8 @@ function App() {
           aoSair={deslogar}
           voltarTrilha={() => irPara('overview')}
           aoNavegar={navegar}
-          aoEditar={(etapa) => {
-            if (etapa === 'identificacao') irPara('etapa-identificacao');
-            else if (etapa === 'renda') irPara('etapa-renda');
-            else if (etapa === 'veiculo') irPara('etapa-veiculo');
-            else irPara('overview');
-          }}
+          aoEditar={abrirEtapa}
+          aoEtapaConcluida={() => marcarEtapaConcluida('revisao')}
         />
       )}
 

@@ -444,6 +444,10 @@ export default function EtapaRenda({
 
             <div
               className="etapaRenda-progresso-etapas"
+              style={{
+                display: 'grid',
+                gridTemplateColumns: `repeat(${totalEtapas}, 1fr)`,
+              }}
               role="progressbar"
               aria-label="Etapas do processo"
               aria-valuenow={numeroEtapa}

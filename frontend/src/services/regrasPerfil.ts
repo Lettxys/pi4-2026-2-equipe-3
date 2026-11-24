@@ -359,8 +359,12 @@ export function montarPerfil(respostas: RespostasPerfil): ResultadoPerfil {
 
 export const ETAPAS_COM_TELA: readonly ChaveEtapaPerfil[] = [
   'identificacao',
+  'representante',
   'documentos-medicos',
   'obter-laudo',
+  'condutores',
+  'minha-cnh',
+  'comprovacao-perda',
   'renda',
   'veiculo',
   'revisao',

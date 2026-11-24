@@ -20,7 +20,17 @@ interface GrupoEtapa {
   documentos: DocumentoSalvo[];
 }
 
-const ORDEM_ETAPAS = ['identificacao', 'documentos-medicos', 'renda', 'veiculo'];
+const ORDEM_ETAPAS = [
+  'identificacao',
+  'representante',
+  'documentos-medicos',
+  'obter-laudo',
+  'minha-cnh',
+  'condutores',
+  'comprovacao-perda',
+  'renda',
+  'veiculo',
+];
 
 function IconePasta() {
   return (

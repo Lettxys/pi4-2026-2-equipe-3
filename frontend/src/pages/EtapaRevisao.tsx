@@ -2,48 +2,42 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 
 import PainelLayout from '../components/PainelLayout';
 import type { DestinoMenu } from '../components/PainelLayout';
+import { listarDocumentos } from '../services/documentosSalvos';
+import type { DocumentoSalvo } from '../services/documentosSalvos';
 import {
-  buscarChecklistDocumentos,
-  buscarCondutores,
-  buscarProgressoProcesso,
-  buscarUsuarioLogado,
-  extrairMensagemDeErro,
-  temToken,
-} from '../services/api';
-import type {
-  DocumentChecklistItemResponse,
-  ListDriversResponse,
-  PerfilProcesso,
-} from '../services/api';
+  baixarArquivo,
+  gerarDossiePdf,
+  gerarDossieZip,
+} from '../services/dossie';
+import type { GrupoDossie } from '../services/dossie';
+import { lerEtapasConcluidas } from '../services/progressoEtapas';
+import { ETAPAS_COM_TELA, montarPerfil } from '../services/regrasPerfil';
+import type { ChaveEtapaPerfil } from '../services/regrasPerfil';
+import {
+  lerRespostasAtivas,
+  lerUsuarioAtivo,
+} from '../services/respostasPerfil';
 
 import './EtapaRevisao.css';
 
-export type ChaveEtapa =
-  | 'identificacao'
-  | 'medicos'
-  | 'condutores'
-  | 'renda'
-  | 'veiculo';
-
 type FormatoDossie = 'pdf' | 'zip';
-type Situacao = 'carregando' | 'ok' | 'sem-processo' | 'erro';
+type StatusLinha = 'ok' | 'pendente' | 'indisponivel';
 
 interface EtapaRevisaoProps {
   aoSair: () => void | Promise<void>;
   voltarTrilha: () => void;
   aoNavegar?: (destino: DestinoMenu) => void;
-  // Chamado pelo botão "Editar" de cada linha da revisão.
-  aoEditar?: (etapa: ChaveEtapa) => void;
-  // O backend ainda não gera o dossiê; quando existir, basta passar a função
-  // que faz o download aqui. Sem ela, a tela avisa que o recurso não está pronto.
-  aoBaixarDossie?: (formato: FormatoDossie) => void | Promise<void>;
+  aoEditar?: (chave: ChaveEtapaPerfil) => void;
+  aoEtapaConcluida?: () => void;
 }
 
-interface LinhaRevisao {
-  chave: ChaveEtapa | 'perfil';
+interface Linha {
+  chave: ChaveEtapaPerfil;
+  numero: number;
   titulo: string;
   detalhe: string;
-  ok: boolean;
+  status: StatusLinha;
+  documentos: DocumentoSalvo[];
 }
 
 interface Toast {
@@ -51,35 +45,11 @@ interface Toast {
   tipo: 'sucesso' | 'aviso';
 }
 
-interface ResumoVeiculo {
-  detalhe: string;
-  ok: boolean;
-}
-
-// Numeração mostrada na tela (trilha do Overview).
-const NUMERO_ETAPA = 6;
-const TOTAL_ETAPAS = 6;
-
 const URL_SISEN =
   'https://www.gov.br/pt-br/servicos/obter-isencao-de-impostos-para-comprar-carro';
-const TETO_VALOR = 200000;
 const TEMPO_TOAST = 4000;
 const CHAVE_VEICULO = 'veiculo-rascunho';
 const CHAVE_ENVIADO = 'revisao-enviado';
-
-const TIPOS_IDENTIFICACAO = ['ID_CARD', 'CPF', 'PROOF_OF_ADDRESS'];
-const TIPOS_MEDICOS = ['MEDICAL_REPORT_IPI', 'MEDICAL_REPORT_ICMS'];
-const TIPOS_CNH_ESPECIAL = ['SPECIAL_DRIVER_LICENSE'];
-const TIPOS_CONDUTORES = ['DRIVER_LICENSE'];
-const TIPOS_RENDA = ['FINANCIAL_DECLARATION'];
-
-const CATEGORIAS: Record<string, string> = {
-  fisica: 'deficiência física',
-  visual: 'deficiência visual',
-  auditiva: 'deficiência auditiva',
-  intelectual: 'deficiência intelectual',
-  autismo: 'autismo',
-};
 
 const PASSOS_SISEN = [
   'Acesse o SISEN pelo site da Receita e entre com a sua conta gov.br.',
@@ -93,30 +63,35 @@ function plural(quantidade: number, singular: string, pluralTexto: string) {
   return `${quantidade} ${quantidade === 1 ? singular : pluralTexto}`;
 }
 
-function lerCategoria(): string | null {
+function formatarTamanho(bytes: number): string {
+  if (bytes >= 1024 * 1024) {
+    return `${(bytes / (1024 * 1024)).toFixed(1).replace('.', ',')} MB`;
+  }
+
+  return `${Math.max(1, Math.round(bytes / 1024))} KB`;
+}
+
+function chavesEquivalentes(chave: ChaveEtapaPerfil): ChaveEtapaPerfil[] {
+  return chave === 'obter-laudo' ? ['obter-laudo', 'documentos-medicos'] : [chave];
+}
+
+function lerEnviadoEm(usuarioId: number | null): string | null {
+  if (usuarioId === null) return null;
+
   try {
-    const respostas = JSON.parse(localStorage.getItem('respostasQuiz') || '{}') as {
-      categoria?: string;
-    };
-    return respostas.categoria ? (CATEGORIAS[respostas.categoria] ?? null) : null;
+    return localStorage.getItem(`${CHAVE_ENVIADO}:${usuarioId}`);
   } catch {
     return null;
   }
 }
 
-function lerEnviadoEm(userId: number): string | null {
-  try {
-    return localStorage.getItem(`${CHAVE_ENVIADO}:${userId}`);
-  } catch {
-    return null;
-  }
-}
+function resumirVeiculo(usuarioId: number | null): string | null {
+  if (usuarioId === null) return null;
 
-// Lê o rascunho salvo pela Etapa 5 (o backend ainda não guarda o veículo).
-function avaliarVeiculo(userId: number): ResumoVeiculo {
   try {
-    const bruto = localStorage.getItem(`${CHAVE_VEICULO}:${userId}`);
-    if (!bruto) return { detalhe: 'Dados do veículo não preenchidos', ok: false };
+    const bruto = localStorage.getItem(`${CHAVE_VEICULO}:${usuarioId}`);
+
+    if (!bruto) return null;
 
     const dados = JSON.parse(bruto) as Record<string, unknown>;
     const texto = (campo: string) =>
@@ -124,59 +99,14 @@ function avaliarVeiculo(userId: number): ResumoVeiculo {
 
     const marca = texto('marca');
     const modelo = texto('modelo').trim();
-    const valorTabela = texto('valorTabela');
-    const digitos = valorTabela.replace(/\D/g, '');
-    const valor = digitos ? Number(digitos) / 100 : 0;
-    const motor = Number(texto('motorizacao').match(/\d+(?:[.,]\d+)?/)?.[0].replace(',', '.'));
-    const portas = texto('portas');
+    const valor = texto('valorTabela');
 
-    if (!marca || !modelo || valor <= 0) {
-      return { detalhe: 'Dados do veículo incompletos', ok: false };
-    }
+    if (!marca || !modelo) return null;
 
-    const requisitosOk =
-      texto('fabricadoBrasil') === 'sim' &&
-      Number.isFinite(motor) &&
-      motor <= 2 &&
-      (portas === '4 portas' || portas === '5 portas') &&
-      valor <= TETO_VALOR;
-
-    return {
-      detalhe: `${marca} ${modelo} · ${valorTabela} · ${
-        requisitosOk ? 'requisitos ok' : 'confira os requisitos'
-      }`,
-      ok: requisitosOk,
-    };
+    return `${marca} ${modelo}${valor ? ` · ${valor}` : ''}`;
   } catch {
-    return { detalhe: 'Não foi possível ler os dados do veículo', ok: false };
+    return null;
   }
-}
-
-function docValido(item: DocumentChecklistItemResponse) {
-  return item.isUploaded && item.status !== 'REJECTED' && item.status !== 'EXPIRED';
-}
-
-function resumirDocumentos(
-  checklist: DocumentChecklistItemResponse[] | null,
-  tipos: string[]
-): { detalhe: string; ok: boolean } {
-  if (!checklist) return { detalhe: 'Não foi possível conferir os documentos', ok: false };
-
-  const itens = checklist.filter((item) => tipos.includes(item.documentType));
-  const validos = itens.filter(docValido).length;
-
-  if (itens.length === 0) return { detalhe: 'Nenhum documento enviado', ok: false };
-  if (validos === itens.length) {
-    return {
-      detalhe: plural(validos, 'documento conferido', 'documentos conferidos'),
-      ok: true,
-    };
-  }
-
-  return {
-    detalhe: plural(itens.length - validos, 'documento pendente', 'documentos pendentes'),
-    ok: false,
-  };
 }
 
 function IconeCheck({ tamanho = 12 }: { tamanho?: number }) {
@@ -186,7 +116,6 @@ function IconeCheck({ tamanho = 12 }: { tamanho?: number }) {
       height={Math.round(tamanho * 0.83)}
       viewBox="0 0 12 10"
       fill="none"
-      xmlns="http://www.w3.org/2000/svg"
       aria-hidden="true"
     >
       <path
@@ -200,83 +129,133 @@ function IconeCheck({ tamanho = 12 }: { tamanho?: number }) {
   );
 }
 
+function IconeSeta() {
+  return (
+    <svg viewBox="0 0 16 16" fill="none" aria-hidden="true">
+      <path
+        d="M14 8H2M7 3 2 8l5 5"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
 export default function EtapaRevisao({
   aoSair,
   voltarTrilha,
   aoNavegar,
   aoEditar,
-  aoBaixarDossie,
+  aoEtapaConcluida,
 }: EtapaRevisaoProps) {
-  const [situacao, setSituacao] = useState<Situacao>('carregando');
-  const [tentativa, setTentativa] = useState(0);
-  const [etapaAtual, setEtapaAtual] = useState(NUMERO_ETAPA);
-  const [userId, setUserId] = useState<number | null>(null);
-  const [perfil, setPerfil] = useState<PerfilProcesso | null>(null);
-  const [checklist, setChecklist] = useState<DocumentChecklistItemResponse[] | null>(null);
-  const [condutores, setCondutores] = useState<ListDriversResponse | null>(null);
-  const [veiculo, setVeiculo] = useState<ResumoVeiculo>({
-    detalhe: 'Dados do veículo não preenchidos',
-    ok: false,
-  });
-  const [categoria] = useState<string | null>(lerCategoria);
-
+  const [respostas] = useState(lerRespostasAtivas);
+  const [concluidas] = useState(lerEtapasConcluidas);
+  const [usuarioId] = useState(lerUsuarioAtivo);
+  const [documentos, setDocumentos] = useState<DocumentoSalvo[] | null>(null);
   const [declarou, setDeclarou] = useState(false);
   const [baixando, setBaixando] = useState<FormatoDossie | null>(null);
-  const [enviadoEm, setEnviadoEm] = useState<string | null>(null);
+  const [enviadoEm, setEnviadoEm] = useState<string | null>(() =>
+    lerEnviadoEm(lerUsuarioAtivo())
+  );
   const [toast, setToast] = useState<Toast | null>(null);
   const temporizadorToast = useRef<number | undefined>(undefined);
 
   useEffect(() => {
     let ativo = true;
 
-    async function carregar() {
-      if (!temToken()) {
-        setSituacao('sem-processo');
-        return;
-      }
+    void listarDocumentos().then((lista) => {
+      if (ativo) setDocumentos(lista);
+    });
 
-      try {
-        const eu = await buscarUsuarioLogado();
-        if (!ativo) return;
-
-        setUserId(eu.userId);
-        setEnviadoEm(lerEnviadoEm(eu.userId));
-        setVeiculo(avaliarVeiculo(eu.userId));
-
-        if (!eu.activeProcessId) {
-          setSituacao('sem-processo');
-          return;
-        }
-
-        const [prog, lista] = await Promise.all([
-          buscarProgressoProcesso(eu.activeProcessId),
-          buscarChecklistDocumentos(eu.activeProcessId).catch(() => null),
-        ]);
-        const motoristas =
-          prog.profileType === 'PCD_NON_DRIVER'
-            ? await buscarCondutores(eu.activeProcessId).catch(() => null)
-            : null;
-        if (!ativo) return;
-
-        setEtapaAtual(prog.currentStep || NUMERO_ETAPA);
-        setPerfil(prog.profileType);
-        setChecklist(lista);
-        setCondutores(motoristas);
-        setSituacao('ok');
-      } catch {
-        if (ativo) setSituacao('erro');
-      }
-    }
-
-    void carregar();
     return () => {
       ativo = false;
     };
-  }, [tentativa]);
+  }, []);
 
   useEffect(() => {
     return () => window.clearTimeout(temporizadorToast.current);
   }, []);
+
+  const perfil = useMemo(() => montarPerfil(respostas ?? {}), [respostas]);
+
+  const totalEtapas = perfil.etapas.length;
+  const posicaoRevisao = perfil.etapas.findIndex((etapa) => etapa.chave === 'revisao');
+  const numeroEtapa = posicaoRevisao >= 0 ? posicaoRevisao + 1 : totalEtapas;
+
+  const linhas = useMemo<Linha[]>(() => {
+    const detalheVeiculo = resumirVeiculo(usuarioId);
+
+    return perfil.etapas
+      .filter((etapa) => etapa.chave !== 'revisao')
+      .map((etapa, indice) => {
+        const equivalentes = chavesEquivalentes(etapa.chave);
+        const docs = (documentos ?? [])
+          .filter((documento) =>
+            equivalentes.includes(documento.etapa as ChaveEtapaPerfil)
+          )
+          .sort((a, b) => a.enviadoEm.localeCompare(b.enviadoEm));
+
+        const temTela = ETAPAS_COM_TELA.includes(etapa.chave);
+        const concluida = equivalentes.some((chave) => concluidas.includes(chave));
+
+        let status: StatusLinha;
+        let detalhe: string;
+
+        if (!temTela) {
+          status = 'indisponivel';
+          detalhe = 'Etapa ainda não disponível no sistema';
+        } else if (concluida) {
+          status = 'ok';
+          detalhe =
+            etapa.chave === 'veiculo' && detalheVeiculo
+              ? detalheVeiculo
+              : docs.length > 0
+                ? plural(docs.length, 'documento conferido', 'documentos conferidos')
+                : 'Etapa concluída';
+        } else {
+          status = 'pendente';
+          detalhe =
+            docs.length > 0
+              ? `Etapa não concluída · ${plural(docs.length, 'documento enviado', 'documentos enviados')}`
+              : 'Etapa ainda não concluída';
+        }
+
+        return {
+          chave: etapa.chave,
+          numero: indice + 1,
+          titulo: etapa.titulo,
+          detalhe,
+          status,
+          documentos: docs,
+        };
+      });
+  }, [perfil, documentos, concluidas, usuarioId]);
+
+  const grupos = useMemo<GrupoDossie[]>(
+    () =>
+      linhas
+        .filter((linha) => linha.documentos.length > 0)
+        .map((linha) => ({
+          numero: linha.numero,
+          titulo: linha.titulo,
+          documentos: linha.documentos,
+        })),
+    [linhas]
+  );
+
+  const totalArquivos = grupos.reduce((soma, grupo) => soma + grupo.documentos.length, 0);
+  const totalBytes = grupos.reduce(
+    (soma, grupo) =>
+      soma + grupo.documentos.reduce((parcial, documento) => parcial + documento.tamanho, 0),
+    0
+  );
+
+  const pendentes = linhas.filter((linha) => linha.status === 'pendente').length;
+  const carregando = documentos === null;
+  const tudoOk = !carregando && pendentes === 0;
+  const podeBaixar = tudoOk && declarou && baixando === null;
 
   function mostrarToast(texto: string, tipo: Toast['tipo']) {
     window.clearTimeout(temporizadorToast.current);
@@ -284,73 +263,44 @@ export default function EtapaRevisao({
     temporizadorToast.current = window.setTimeout(() => setToast(null), TEMPO_TOAST);
   }
 
-  function tentarNovamente() {
-    setSituacao('carregando');
-    setTentativa((valor) => valor + 1);
-  }
-
-  const eCondutor = perfil === 'PCD_DRIVER';
-
-  const linhas = useMemo<LinhaRevisao[]>(() => {
-    const partesPerfil = [eCondutor ? 'PcD condutor' : 'PcD não condutor'];
-    if (categoria) partesPerfil.push(categoria);
-    if (!eCondutor && condutores) {
-      partesPerfil.push(
-        plural(
-          condutores.registeredDriversCount,
-          'condutor autorizado',
-          'condutores autorizados'
-        )
-      );
-    }
-
-    const identificacao = resumirDocumentos(checklist, TIPOS_IDENTIFICACAO);
-    const medicos = resumirDocumentos(checklist, TIPOS_MEDICOS);
-    const habilitacao = eCondutor
-      ? resumirDocumentos(checklist, TIPOS_CNH_ESPECIAL)
-      : condutores && condutores.registeredDriversCount === 0
-        ? { detalhe: 'Nenhum condutor cadastrado', ok: false }
-        : resumirDocumentos(checklist, TIPOS_CONDUTORES);
-    const renda = resumirDocumentos(checklist, TIPOS_RENDA);
-
-    return [
-      { chave: 'perfil', titulo: 'Perfil', detalhe: partesPerfil.join(' · '), ok: true },
-      { chave: 'identificacao', titulo: 'Identificação', ...identificacao },
-      { chave: 'medicos', titulo: 'Documentos médicos', ...medicos },
-      {
-        chave: 'condutores',
-        titulo: eCondutor ? 'CNH especial' : 'Condutores autorizados',
-        ...habilitacao,
-      },
-      {
-        chave: 'renda',
-        titulo: 'Renda e acesso gov.br',
-        ...renda,
-        detalhe: renda.ok ? 'Declaração financeira enviada' : renda.detalhe,
-      },
-      { chave: 'veiculo', titulo: 'Dados do veículo', ...veiculo },
-    ];
-  }, [categoria, checklist, condutores, eCondutor, veiculo]);
-
-  const pendentes = linhas.filter((linha) => !linha.ok).length;
-  const tudoOk = situacao === 'ok' && pendentes === 0;
-  const podeBaixar = tudoOk && declarou && baixando === null;
-
-  let numero = 0;
-
   async function baixar(formato: FormatoDossie) {
     if (!podeBaixar) return;
 
-    if (!aoBaixarDossie) {
-      mostrarToast('O download do dossiê ainda não está disponível nesta versão.', 'aviso');
-      return;
-    }
-
     setBaixando(formato);
+
     try {
-      await aoBaixarDossie(formato);
-    } catch (error) {
-      mostrarToast(extrairMensagemDeErro(error, 'Não foi possível baixar o dossiê.'), 'aviso');
+      if (formato === 'pdf') {
+        const { blob, ignorados } = await gerarDossiePdf({
+          perfil: perfil.tags.join(' · '),
+          geradoEm: new Date(),
+          linhas: linhas.map((linha) => ({
+            numero: linha.numero,
+            titulo: linha.titulo,
+            detalhe: linha.detalhe,
+          })),
+          grupos,
+        });
+
+        baixarArquivo(blob, 'dossie-isenta.pdf');
+
+        if (ignorados.length > 0) {
+          mostrarToast(
+            `Dossiê baixado, mas ${plural(ignorados.length, 'arquivo não pôde', 'arquivos não puderam')} ser incluído.`,
+            'aviso'
+          );
+        } else {
+          mostrarToast('Dossiê baixado.', 'sucesso');
+        }
+      } else {
+        const blob = await gerarDossieZip(grupos);
+        baixarArquivo(blob, 'documentos-isenta.zip');
+        mostrarToast('Arquivos baixados.', 'sucesso');
+      }
+
+      aoEtapaConcluida?.();
+    } catch (erro) {
+      console.error('[Dossiê]', erro);
+      mostrarToast('Não foi possível gerar o dossiê. Tente novamente.', 'aviso');
     } finally {
       setBaixando(null);
     }
@@ -358,42 +308,47 @@ export default function EtapaRevisao({
 
   function marcarEnviado() {
     const agora = new Date().toISOString();
+
     setEnviadoEm(agora);
-    if (userId !== null) {
+
+    if (usuarioId !== null) {
       try {
-        localStorage.setItem(`${CHAVE_ENVIADO}:${userId}`, agora);
+        localStorage.setItem(`${CHAVE_ENVIADO}:${usuarioId}`, agora);
       } catch {
-        // Sem armazenamento: a marcação vale só enquanto a tela está aberta.
+        return;
       }
     }
+
+    aoEtapaConcluida?.();
     mostrarToast('Pedido marcado como enviado. Boa sorte!', 'sucesso');
   }
 
   function desfazerEnvio() {
     setEnviadoEm(null);
-    if (userId !== null) {
+
+    if (usuarioId !== null) {
       try {
-        localStorage.removeItem(`${CHAVE_ENVIADO}:${userId}`);
+        localStorage.removeItem(`${CHAVE_ENVIADO}:${usuarioId}`);
       } catch {
-        // Ignora: nada a desfazer fora da tela.
+        return;
       }
     }
   }
 
-  const dicaDossie = !tudoOk
-    ? situacao === 'ok'
+  const dicaDossie = carregando
+    ? 'Aguarde a conferência dos dados.'
+    : !tudoOk
       ? `Resolva ${plural(pendentes, 'item pendente', 'itens pendentes')} acima para liberar o dossiê.`
-      : 'Aguarde a conferência dos dados.'
-    : !declarou
-      ? 'Marque a declaração acima para liberar o download.'
-      : 'Um PDF com o resumo dos dados e todos os documentos, na ordem pedida pelo SISEN.';
+      : !declarou
+        ? 'Marque a declaração acima para liberar o download.'
+        : 'Um PDF com o resumo dos dados e todos os documentos, na ordem pedida pelo SISEN.';
 
   return (
     <PainelLayout
       aoSair={aoSair}
       aoNavegar={aoNavegar}
       itemAtivo="processo"
-      caminho={['Meu processo', `Etapa ${NUMERO_ETAPA} · Revisão e dossiê`]}
+      caminho={['Meu processo', `Etapa ${numeroEtapa} · Revisão e dossiê`]}
     >
       {toast && (
         <div className={`etapaRev-toast ${toast.tipo}`} role="status" aria-live="polite">
@@ -408,28 +363,31 @@ export default function EtapaRevisao({
         <div className="etapaRev-conteudo">
           <section className="etapaRev-principal">
             <button type="button" className="etapaRev-voltar" onClick={voltarTrilha}>
-              <span aria-hidden="true">←</span>
+              <IconeSeta />
               Voltar para a trilha
             </button>
 
             <div
               className="etapaRev-progresso-etapas"
+              style={{ gridTemplateColumns: `repeat(${totalEtapas}, 1fr)` }}
               role="progressbar"
               aria-label="Etapas do processo"
-              aria-valuenow={etapaAtual}
+              aria-valuenow={numeroEtapa}
               aria-valuemin={1}
-              aria-valuemax={TOTAL_ETAPAS}
+              aria-valuemax={totalEtapas}
             >
-              {Array.from({ length: TOTAL_ETAPAS }).map((_, index) => (
+              {Array.from({ length: totalEtapas }).map((_, indice) => (
                 <div
-                  key={index}
-                  className={`etapaRev-progresso-item${index < etapaAtual ? ' concluido' : ''}`}
+                  key={indice}
+                  className={`etapaRev-progresso-item${
+                    indice < numeroEtapa ? ' concluido' : ''
+                  }`}
                 />
               ))}
             </div>
 
             <span className="etapaRev-indicador">
-              ETAPA {NUMERO_ETAPA} DE {TOTAL_ETAPAS} · ÚLTIMA
+              ETAPA {numeroEtapa} DE {totalEtapas} · ÚLTIMA
             </span>
 
             <h1>
@@ -442,60 +400,62 @@ export default function EtapaRevisao({
             </p>
 
             <section className="etapaRev-card">
-              {situacao === 'carregando' && (
+              {carregando ? (
                 <p className="etapaRev-estado">Conferindo os seus dados...</p>
-              )}
-
-              {situacao === 'sem-processo' && (
-                <p className="etapaRev-estado">
-                  Você ainda não iniciou um processo. Volte à trilha para começar.
-                </p>
-              )}
-
-              {situacao === 'erro' && (
-                <div className="etapaRev-estado" role="alert">
-                  Não foi possível carregar os dados do seu processo.
-                  <button type="button" className="etapaRev-editar" onClick={tentarNovamente}>
-                    Tentar de novo
-                  </button>
-                </div>
-              )}
-
-              {situacao === 'ok' && (
+              ) : (
                 <ul className="etapaRev-linhas">
-                  {linhas.map((linha) => {
-                    const rotuloNumero = linha.chave === 'perfil' ? '' : `${++numero} · `;
-                    return (
-                      <li key={linha.chave} className="etapaRev-linha">
-                        <span
-                          className={`etapaRev-icone ${linha.ok ? 'ok' : 'pendente'}`}
-                          aria-hidden="true"
-                        >
-                          {linha.ok ? <IconeCheck /> : '!'}
-                        </span>
+                  <li className="etapaRev-linha">
+                    <span className="etapaRev-icone ok" aria-hidden="true">
+                      <IconeCheck />
+                    </span>
 
-                        <div className="etapaRev-linha-texto">
-                          <strong>
-                            {rotuloNumero}
-                            {linha.titulo}
-                          </strong>
-                          <span className={linha.ok ? undefined : 'pendente'}>
-                            {linha.detalhe}
-                          </span>
-                        </div>
+                    <div className="etapaRev-linha-texto">
+                      <strong>Perfil</strong>
+                      <span>{perfil.tags.join(' · ')}</span>
+                    </div>
+                  </li>
 
-                        {linha.chave !== 'perfil' && aoEditar && (
-                          <button
-                            type="button"
-                            className="etapaRev-editar"
-                            onClick={() => aoEditar(linha.chave as ChaveEtapa)}
-                          >
-                            Editar
-                          </button>
+                  {linhas.map((linha) => (
+                    <li key={linha.chave} className="etapaRev-linha">
+                      <span
+                        className={`etapaRev-icone ${
+                          linha.status === 'ok'
+                            ? 'ok'
+                            : linha.status === 'pendente'
+                              ? 'pendente'
+                              : 'neutro'
+                        }`}
+                        aria-hidden="true"
+                      >
+                        {linha.status === 'ok' ? (
+                          <IconeCheck />
+                        ) : linha.status === 'pendente' ? (
+                          '!'
+                        ) : (
+                          '–'
                         )}
-                      </li>
-                    );
-                  })}
+                      </span>
+
+                      <div className="etapaRev-linha-texto">
+                        <strong>
+                          {linha.numero} · {linha.titulo}
+                        </strong>
+                        <span className={linha.status === 'pendente' ? 'pendente' : undefined}>
+                          {linha.detalhe}
+                        </span>
+                      </div>
+
+                      {linha.status !== 'indisponivel' && aoEditar && (
+                        <button
+                          type="button"
+                          className="etapaRev-editar"
+                          onClick={() => aoEditar(linha.chave)}
+                        >
+                          {linha.status === 'pendente' ? 'Concluir' : 'Editar'}
+                        </button>
+                      )}
+                    </li>
+                  ))}
                 </ul>
               )}
 
@@ -521,7 +481,12 @@ export default function EtapaRevisao({
                   )}
                   {tudoOk ? 'Seu dossiê está pronto' : 'Seu dossiê ainda não está pronto'}
                 </h2>
-                <span className="etapaRev-selo-formato">PDF único</span>
+
+                <span className="etapaRev-selo-formato">
+                  {tudoOk
+                    ? `${plural(totalArquivos, 'arquivo', 'arquivos')} · ${formatarTamanho(totalBytes)}`
+                    : 'PDF único'}
+                </span>
               </div>
 
               <p>{dicaDossie}</p>
@@ -533,15 +498,16 @@ export default function EtapaRevisao({
                   disabled={!podeBaixar}
                   onClick={() => void baixar('pdf')}
                 >
-                  {baixando === 'pdf' ? 'Baixando...' : 'Baixar dossiê (PDF)'}
+                  {baixando === 'pdf' ? 'Gerando PDF...' : 'Baixar dossiê (PDF)'}
                 </button>
+
                 <button
                   type="button"
                   className="secundario"
                   disabled={!podeBaixar}
                   onClick={() => void baixar('zip')}
                 >
-                  {baixando === 'zip' ? 'Baixando...' : 'Baixar arquivos separados (.zip)'}
+                  {baixando === 'zip' ? 'Gerando .zip...' : 'Baixar arquivos separados (.zip)'}
                 </button>
               </div>
             </section>
@@ -552,9 +518,9 @@ export default function EtapaRevisao({
               <h3>Como enviar pelo SISEN</h3>
 
               <ol className="etapaRev-passos">
-                {PASSOS_SISEN.map((passo, index) => (
+                {PASSOS_SISEN.map((passo, indice) => (
                   <li key={passo}>
-                    <span aria-hidden="true">{index + 1}</span>
+                    <span aria-hidden="true">{indice + 1}</span>
                     {passo}
                   </li>
                 ))}
@@ -576,13 +542,11 @@ export default function EtapaRevisao({
               <ul className="etapaRev-depois">
                 <li>
                   <span className="etapaRev-selo">3d</span>
-                  A análise costuma levar até 3 dias.
+                  A análise costuma levar cerca de 3 dias úteis.
                 </li>
                 <li>
-                  <span className="etapaRev-selo">
-                    <IconeCheck tamanho={9} />
-                  </span>
-                  A autorização é emitida no próprio SISEN; acompanhe por lá.
+                  <span className="etapaRev-selo">30d</span>
+                  Se a Receita pedir algo, você tem cerca de 30 dias para responder.
                 </li>
                 <li>
                   <span className="etapaRev-selo">270d</span>
@@ -607,7 +571,7 @@ export default function EtapaRevisao({
                     Marcar como enviado
                   </button>
                   <span>
-                    Opcional: só para você se organizar. O SISEN não é conectado a este site.
+                    Opcional: só para você se organizar. O isenta+ não acompanha a análise.
                   </span>
                 </>
               )}

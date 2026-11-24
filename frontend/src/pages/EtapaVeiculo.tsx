@@ -4,15 +4,19 @@ import type { ChangeEvent } from 'react';
 import PainelLayout from '../components/PainelLayout';
 import type { DestinoMenu } from '../components/PainelLayout';
 import { buscarUsuarioLogado, temToken } from '../services/api';
-import { montarPerfil } from '../services/regrasPerfil';
+import { montarPerfil, proximaEtapaComTela } from '../services/regrasPerfil';
+import type { ChaveEtapaPerfil } from '../services/regrasPerfil';
 import { lerRespostasAtivas } from '../services/respostasPerfil';
 
 import './EtapaVeiculo.css';
+import './EtapaConcluida.css';
 
 interface EtapaVeiculoProps {
   aoSair: () => void | Promise<void>;
   voltarTrilha: () => void;
   aoConcluir?: () => void;
+  aoComecarProximaEtapa?: (chave?: ChaveEtapaPerfil) => void;
+  aoEtapaConcluida?: () => void;
   aoNavegar?: (destino: DestinoMenu) => void;
   abrirCalculadora?: () => void;
 }
@@ -180,6 +184,20 @@ function IconeSetaDireita() {
   );
 }
 
+function IconeCheckGrande() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path
+        d="m5 12.5 4.5 4.5L19 7.5"
+        stroke="currentColor"
+        strokeWidth="2.4"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
 function IconeCheckRequisito() {
   return (
     <svg width="10" height="8" viewBox="0 0 12 10" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
@@ -226,6 +244,8 @@ export default function EtapaVeiculo({
   aoSair,
   voltarTrilha,
   aoConcluir,
+  aoComecarProximaEtapa,
+  aoEtapaConcluida,
   aoNavegar,
   abrirCalculadora,
 }: EtapaVeiculoProps) {
@@ -237,6 +257,7 @@ export default function EtapaVeiculo({
   const [chaveRascunho, setChaveRascunho] = useState<string | null>(null);
   const [respostas] = useState(lerRespostasAtivas);
   const inputProposta = useRef<HTMLInputElement>(null);
+  const botaoProximaEtapa = useRef<HTMLButtonElement | null>(null);
 
   const etapasDoPerfil = montarPerfil(respostas ?? {}).etapas;
   const posicaoNoPerfil = etapasDoPerfil.findIndex(
@@ -244,6 +265,9 @@ export default function EtapaVeiculo({
   );
   const numeroEtapa = posicaoNoPerfil >= 0 ? posicaoNoPerfil + 1 : NUMERO_ETAPA;
   const totalEtapas = etapasDoPerfil.length > 0 ? etapasDoPerfil.length : TOTAL_ETAPAS;
+  const proxima = proximaEtapaComTela(etapasDoPerfil, CHAVE_ETAPA);
+  const numeroProxima = proxima ? proxima.numero : numeroEtapa + 1;
+  const tituloProxima = proxima ? proxima.etapa.titulo : '';
 
   useEffect(() => {
     let ativo = true;
@@ -272,6 +296,24 @@ export default function EtapaVeiculo({
   useEffect(() => {
     if (chaveRascunho) salvarRascunho(chaveRascunho, dados);
   }, [chaveRascunho, dados]);
+
+  useEffect(() => {
+    if (!etapaConcluida) return;
+
+    botaoProximaEtapa.current?.focus();
+
+    function aoTeclar(event: KeyboardEvent) {
+      if (event.key === 'Escape') {
+        setEtapaConcluida(false);
+      }
+    }
+
+    window.addEventListener('keydown', aoTeclar);
+
+    return () => {
+      window.removeEventListener('keydown', aoTeclar);
+    };
+  }, [etapaConcluida]);
 
   function alterar<K extends keyof DadosVeiculo>(
     campo: K,
@@ -375,17 +417,31 @@ export default function EtapaVeiculo({
     if (!podeConcluir) return;
 
     if (chaveRascunho) salvarRascunho(chaveRascunho, dados);
+    aoEtapaConcluida?.();
     setEtapaConcluida(true);
+  }
+
+  function irParaTrilha() {
+    setEtapaConcluida(false);
     (aoConcluir ?? voltarTrilha)();
   }
 
-  const mensagemConcluir = etapaConcluida
-    ? 'Dados do veículo salvos neste navegador.'
-    : !camposObrigatoriosOk
-      ? 'Preencha os dados do veículo.'
-      : !podeConcluir
-        ? 'Confira os requisitos do veículo.'
-        : 'Você pode trocar de carro depois, antes da revisão.';
+  function comecarProximaEtapa() {
+    setEtapaConcluida(false);
+
+    if (proxima && aoComecarProximaEtapa) {
+      aoComecarProximaEtapa(proxima.etapa.chave);
+      return;
+    }
+
+    (aoConcluir ?? voltarTrilha)();
+  }
+
+  const mensagemConcluir = !camposObrigatoriosOk
+    ? 'Preencha os dados do veículo.'
+    : !podeConcluir
+      ? 'Confira os requisitos do veículo.'
+      : 'Você pode trocar de carro depois, antes da revisão.';
 
   return (
     <PainelLayout
@@ -404,6 +460,10 @@ export default function EtapaVeiculo({
 
             <div
               className="etapa5-progresso-etapas"
+              style={{
+                display: 'grid',
+                gridTemplateColumns: `repeat(${totalEtapas}, 1fr)`,
+              }}
               role="progressbar"
               aria-label="Etapas do processo"
               aria-valuenow={numeroEtapa}
@@ -697,14 +757,8 @@ export default function EtapaVeiculo({
 
             <section className="etapa5-concluir-card">
               <button type="button" disabled={!podeConcluir} onClick={concluirEtapa}>
-                {etapaConcluida ? (
-                  'Etapa concluída'
-                ) : (
-                  <>
-                    Concluir etapa {numeroEtapa}
-                    <IconeSetaDireita />
-                  </>
-                )}
+                Concluir etapa {numeroEtapa}
+                <IconeSetaDireita />
               </button>
 
               <span>{mensagemConcluir}</span>
@@ -712,6 +766,72 @@ export default function EtapaVeiculo({
           </aside>
         </div>
       </div>
+
+      {etapaConcluida && (
+        <div
+          className="etapa-concluida-overlay"
+          onClick={() => setEtapaConcluida(false)}
+        >
+          <section
+            className="etapa-concluida-modal"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="etapa-concluida-titulo"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <span className="etapa-concluida-icone">
+              <IconeCheckGrande />
+            </span>
+
+            <h2 id="etapa-concluida-titulo">Etapa {numeroEtapa} concluída!</h2>
+
+            <p className="etapa-concluida-texto">
+              Os dados do veículo foram salvos.
+              <br />
+              <strong>
+                Etapa {numeroProxima}
+                {tituloProxima ? ` · ${tituloProxima}` : ''}
+              </strong>{' '}
+              liberada.
+            </p>
+
+            <div className="etapa-concluida-passos" aria-hidden="true">
+              {Array.from({ length: totalEtapas }, (_, indice) => (
+                <span
+                  key={indice}
+                  className={
+                    indice < numeroEtapa
+                      ? 'ativo'
+                      : indice === numeroEtapa
+                        ? 'proxima'
+                        : ''
+                  }
+                />
+              ))}
+            </div>
+
+            <div className="etapa-concluida-acoes">
+              <button
+                ref={botaoProximaEtapa}
+                type="button"
+                className="etapa-concluida-primario"
+                onClick={comecarProximaEtapa}
+              >
+                Começar etapa {numeroProxima}
+                <IconeSetaDireita />
+              </button>
+
+              <button
+                type="button"
+                className="etapa-concluida-secundario"
+                onClick={irParaTrilha}
+              >
+                Voltar à trilha
+              </button>
+            </div>
+          </section>
+        </div>
+      )}
     </PainelLayout>
   );
 }

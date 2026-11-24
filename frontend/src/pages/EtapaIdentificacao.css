@@ -817,3 +817,39 @@
     flex-wrap: wrap;
   }
 }
+/* ---- Etapa Condutores ---- */
+
+.etapa-doc-rotulo {
+  display: block;
+  margin-bottom: calc(8 * var(--ue));
+
+  color: #17335c;
+  font-size: calc(13.5 * var(--ue));
+  font-weight: 600;
+}
+
+.etapa-documentos-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: calc(20 * var(--ue));
+
+  margin-top: calc(16 * var(--ue));
+}
+
+.etapa-doc-corpo .etapa-soltar,
+.etapa-documentos-grid .etapa-soltar {
+  margin-top: 0;
+}
+
+.etapa-formatos + .etapa-soltar {
+  display: flex;
+  width: 100%;
+  margin-top: calc(18 * var(--ue));
+}
+
+
+@media (max-width: 700px) {
+  .etapa-documentos-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import Landing from './pages/Landing';
 import Calculadora from './pages/Calculadora';
 import Quiz from './pages/Quiz';
+import QuizPerfil from './pages/QuizPerfil';
 import Login from './pages/Login';
 import Registrar from './pages/Registrar';
 import ForgotPassword from './pages/ForgotPassword';
@@ -10,7 +11,10 @@ import VerificarCodigo from './pages/VerificarCodigo';
 import ResetPassword from './pages/ResetPassword';
 import Overview from './pages/Overview';
 import EtapaIdentificacao from './pages/EtapaIdentificacao';
+import EtapaRepresentante from './pages/EtapaRepresentante';
 import EtapaDocumentosMedicos from './pages/EtapaDocumentosMedicos';
+import EtapaCondutores from './pages/EtapaCondutores';
+import EtapaComprovacaoPerda from './pages/EtapaComprovacaoPerda';
 import EtapaRenda from './pages/EtapaRenda';
 import Documentos from './pages/Documentos';
 import type { DestinoMenu } from './components/PainelLayout';
@@ -22,18 +26,36 @@ import {
   sair,
   temToken,
 } from './services/api';
+import { removerDocumentosDaEtapa } from './services/documentosSalvos';
 import {
+  desmarcarEtapaConcluida,
   limparEtapasConcluidas,
   marcarEtapaConcluida,
 } from './services/progressoEtapas';
+import {
+  etapasAfetadasPorMudanca,
+  montarPerfil,
+} from './services/regrasPerfil';
+import type { ChaveEtapaPerfil, RespostasPerfil } from './services/regrasPerfil';
+import {
+  ativarRespostasDoUsuario,
+  lerRespostasAtivas,
+  limparRespostasAtivas,
+  salvarRespostasDoUsuario,
+  temRespostasDoUsuario,
+} from './services/respostasPerfil';
 
 type Pagina =
   | 'landing'
   | 'calculadora'
   | 'quiz'
+  | 'quiz-perfil'
   | 'overview'
   | 'etapa-identificacao'
+  | 'etapa-representante'
   | 'etapa-documentos-medicos'
+  | 'etapa-condutores'
+  | 'etapa-comprovacao-perda'
   | 'etapa-renda'
   | 'etapa-veiculo'
   | 'etapa-revisao'
@@ -47,12 +69,14 @@ type Modal =
   | 'ResetPassword'
   | null;
 
-// Telas internas: só abrem com usuário autenticado.
-// As demais (landing, calculadora, quiz e os modais) são públicas.
 const PAGINAS_PROTEGIDAS: Pagina[] = [
+  'quiz-perfil',
   'overview',
   'etapa-identificacao',
+  'etapa-representante',
   'etapa-documentos-medicos',
+  'etapa-condutores',
+  'etapa-comprovacao-perda',
   'etapa-renda',
   'etapa-veiculo',
   'etapa-revisao',
@@ -63,34 +87,39 @@ function ehProtegida(pagina: Pagina): boolean {
   return PAGINAS_PROTEGIDAS.includes(pagina);
 }
 
+function beneficiarioEhCondutor(): boolean {
+  return montarPerfil(lerRespostasAtivas() ?? {}).situacao === 'pcd-condutor';
+}
+
 function App() {
   const [pagina, setPagina] = useState<Pagina>('overview');
   const [modal, setModal] = useState<Modal>(null);
   const [emailRecuperacao, setEmailRecuperacao] = useState('');
   const [tokenRedefinicao, setTokenRedefinicao] = useState('');
   const [verificandoSessao, setVerificandoSessao] = useState(temToken());
-  // Tela interna que a pessoa tentou abrir sem estar logada (volta para ela após o login)
   const [destinoPendente, setDestinoPendente] = useState<Pagina | null>(null);
+  const [usuarioId, setUsuarioId] = useState<number | null>(null);
 
-  // Ao abrir o app: se existe token salvo, confirma com o servidor e vai ao Overview
   useEffect(() => {
     if (!temToken()) {
       return;
     }
 
     buscarUsuarioLogado()
-      .then(() => setPagina('overview'))
-      .catch(() => {
-        // 401: o token já foi limpo e a pessoa fica na landing.
-        // Outros erros (ex.: servidor fora do ar): também fica na landing.
+      .then((eu) => {
+        setUsuarioId(eu.userId);
+        ativarRespostasDoUsuario(eu.userId);
+        setPagina(temRespostasDoUsuario(eu.userId) ? 'overview' : 'quiz-perfil');
       })
+      .catch(() => undefined)
       .finally(() => setVerificandoSessao(false));
   }, []);
 
-  // Se o servidor recusar o token durante o uso, volta para a landing
   useEffect(() => {
     function aoExpirar() {
       limparEtapasConcluidas();
+      limparRespostasAtivas();
+      setUsuarioId(null);
       setPagina('landing');
       setModal(null);
     }
@@ -103,7 +132,6 @@ function App() {
   }, []);
 
   function irPara(destino: Pagina) {
-    // Guard: tela interna sem token abre o login e guarda o destino
     if (ehProtegida(destino) && !temToken()) {
       setDestinoPendente(destino);
       setPagina('landing');
@@ -116,19 +144,35 @@ function App() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
-  // Menu lateral do painel: "Visão geral" e "Meu processo" abrem o Overview
   function navegar(destino: DestinoMenu) {
+    if (destino === 'refazer-quiz') {
+      irPara('quiz-perfil');
+      return;
+    }
+
     irPara(destino === 'documentos' ? 'documentos' : 'overview');
   }
 
+  function abrirEtapa(chave?: ChaveEtapaPerfil) {
+    if (chave === 'identificacao') irPara('etapa-identificacao');
+    else if (chave === 'representante') irPara('etapa-representante');
+    else if (chave === 'documentos-medicos' || chave === 'obter-laudo')
+      irPara('etapa-documentos-medicos');
+    else if (chave === 'condutores' || chave === 'minha-cnh')
+      irPara('etapa-condutores');
+    else if (chave === 'comprovacao-perda') irPara('etapa-comprovacao-perda');
+    else if (chave === 'renda') irPara('etapa-renda');
+    else if (chave === 'veiculo') irPara('etapa-veiculo');
+    else if (chave === 'revisao') irPara('etapa-revisao');
+    else irPara('overview');
+  }
+
   async function deslogar() {
-    try {
-      await sair();
-    } catch {
-      // O token é removido do localStorage mesmo se a requisição falhar
-    }
+    await sair().catch(() => undefined);
 
     limparEtapasConcluidas();
+    limparRespostasAtivas();
+    setUsuarioId(null);
     setDestinoPendente(null);
     irPara('landing');
   }
@@ -151,15 +195,32 @@ function App() {
     setModal(null);
   }
 
-  // Login aceito: volta para a tela que a pessoa tentou abrir (ou Overview)
-  function aoEntrar() {
+  async function aoEntrar() {
     const destino = destinoPendente ?? 'overview';
     setDestinoPendente(null);
-    irPara(destino);
+
+    try {
+      const eu = await buscarUsuarioLogado();
+      setUsuarioId(eu.userId);
+      ativarRespostasDoUsuario(eu.userId);
+      irPara(temRespostasDoUsuario(eu.userId) ? destino : 'quiz-perfil');
+    } catch {
+      irPara(destino);
+    }
   }
 
-  // Segunda camada do guard: mesmo que o estado aponte para uma tela interna,
-  // sem token ela não é renderizada (ex.: token removido em outra aba)
+  async function concluirQuizPerfil(respostas: RespostasPerfil) {
+    const afetadas = etapasAfetadasPorMudanca(lerRespostasAtivas(), respostas);
+
+    for (const chave of afetadas) {
+      await removerDocumentosDaEtapa(chave);
+      desmarcarEtapaConcluida(chave);
+    }
+
+    salvarRespostasDoUsuario(usuarioId, respostas);
+    irPara('overview');
+  }
+
   const paginaAtual: Pagina =
     ehProtegida(pagina) && !temToken() ? 'landing' : pagina;
 
@@ -193,16 +254,17 @@ function App() {
         />
       )}
 
+      {paginaAtual === 'quiz-perfil' && (
+        <QuizPerfil
+          voltarInicio={() => irPara('landing')}
+          concluir={concluirQuizPerfil}
+        />
+      )}
+
       {paginaAtual === 'overview' && (
         <Overview
           aoSair={deslogar}
-          aoComecarEtapa={(_numero, titulo) => {
-            if (titulo.includes('Renda')) irPara('etapa-renda');
-            else if (titulo.includes('veículo')) irPara('etapa-veiculo');
-            else if (titulo.includes('Revisão')) irPara('etapa-revisao');
-            else if (titulo.includes('médicos')) irPara('etapa-documentos-medicos');
-            else irPara('etapa-identificacao');
-          }}
+          aoComecarEtapa={(_numero, _titulo, chave) => abrirEtapa(chave)}
           aoNavegar={navegar}
         />
       )}
@@ -212,8 +274,19 @@ function App() {
           aoSair={deslogar}
           voltarTrilha={() => irPara('overview')}
           aoConcluir={() => irPara('overview')}
-          aoComecarEtapa2={() => irPara('etapa-documentos-medicos')}
+          aoComecarEtapa2={abrirEtapa}
           aoEtapaConcluida={() => marcarEtapaConcluida('identificacao')}
+          aoNavegar={navegar}
+        />
+      )}
+
+      {paginaAtual === 'etapa-representante' && (
+        <EtapaRepresentante
+          aoSair={deslogar}
+          voltarTrilha={() => irPara('overview')}
+          aoConcluir={() => irPara('overview')}
+          aoComecarProximaEtapa={abrirEtapa}
+          aoEtapaConcluida={() => marcarEtapaConcluida('representante')}
           aoNavegar={navegar}
         />
       )}
@@ -223,7 +296,35 @@ function App() {
           aoSair={deslogar}
           voltarTrilha={() => irPara('overview')}
           aoConcluir={() => irPara('overview')}
+          aoComecarProximaEtapa={abrirEtapa}
           aoEtapaConcluida={() => marcarEtapaConcluida('documentos-medicos')}
+          aoNavegar={navegar}
+        />
+      )}
+
+      {paginaAtual === 'etapa-condutores' && (
+        <EtapaCondutores
+          aoSair={deslogar}
+          voltarTrilha={() => irPara('overview')}
+          aoConcluir={() => irPara('overview')}
+          aoComecarProximaEtapa={abrirEtapa}
+          aoEtapaConcluida={() =>
+            marcarEtapaConcluida(
+              beneficiarioEhCondutor() ? 'minha-cnh' : 'condutores'
+            )
+          }
+          aoNavegar={navegar}
+          beneficiarioEhCondutor={beneficiarioEhCondutor()}
+        />
+      )}
+
+      {paginaAtual === 'etapa-comprovacao-perda' && (
+        <EtapaComprovacaoPerda
+          aoSair={deslogar}
+          voltarTrilha={() => irPara('overview')}
+          aoConcluir={() => irPara('overview')}
+          aoComecarProximaEtapa={abrirEtapa}
+          aoEtapaConcluida={() => marcarEtapaConcluida('comprovacao-perda')}
           aoNavegar={navegar}
         />
       )}
@@ -232,10 +333,9 @@ function App() {
         <EtapaRenda
           aoSair={deslogar}
           voltarTrilha={() => irPara('overview')}
-          aoConcluir={() => {
-            marcarEtapaConcluida('renda');
-            irPara('overview');
-          }}
+          aoConcluir={() => irPara('overview')}
+          aoComecarEtapa2={abrirEtapa}
+          aoEtapaConcluida={() => marcarEtapaConcluida('renda')}
           aoNavegar={navegar}
         />
       )}
@@ -244,10 +344,9 @@ function App() {
         <EtapaVeiculo
           aoSair={deslogar}
           voltarTrilha={() => irPara('overview')}
-          aoConcluir={() => {
-            marcarEtapaConcluida('veiculo');
-            irPara('overview');
-          }}
+          aoConcluir={() => irPara('overview')}
+          aoComecarProximaEtapa={abrirEtapa}
+          aoEtapaConcluida={() => marcarEtapaConcluida('veiculo')}
           aoNavegar={navegar}
           abrirCalculadora={() => irPara('calculadora')}
         />
@@ -258,14 +357,8 @@ function App() {
           aoSair={deslogar}
           voltarTrilha={() => irPara('overview')}
           aoNavegar={navegar}
-          aoEditar={(etapa) => {
-            // Só existem telas para identificação, renda e veículo;
-            // as demais voltam para a trilha.
-            if (etapa === 'identificacao') irPara('etapa-identificacao');
-            else if (etapa === 'renda') irPara('etapa-renda');
-            else if (etapa === 'veiculo') irPara('etapa-veiculo');
-            else irPara('overview');
-          }}
+          aoEditar={abrirEtapa}
+          aoEtapaConcluida={() => marcarEtapaConcluida('revisao')}
         />
       )}
 

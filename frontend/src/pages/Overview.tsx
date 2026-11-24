@@ -9,12 +9,28 @@ import {
   type DocumentChecklistItemResponse,
   type ProcessProgressResponse,
 } from '../services/api';
+import { lerEtapasConcluidas } from '../services/progressoEtapas';
+import type { ChaveEtapa } from '../services/progressoEtapas';
+import {
+  ETAPAS_COM_TELA,
+  montarPerfil,
+  normalizarRespostas,
+} from '../services/regrasPerfil';
+import type {
+  ChaveEtapaPerfil,
+  ResultadoPerfil,
+} from '../services/regrasPerfil';
 
 import './Overview.css';
+import './OverviewEstados.css';
 
 interface OverviewProps {
   aoSair: () => void | Promise<void>;
-  aoComecarEtapa?: (numero: string, titulo: string) => void;
+  aoComecarEtapa?: (
+    numero: string,
+    titulo: string,
+    chave: ChaveEtapaPerfil
+  ) => void;
   aoNavegar?: (destino: DestinoMenu) => void;
 }
 
@@ -38,7 +54,6 @@ const etapas = [
       'CPF ativo',
       'Comprovante de endereço (até 90 dias)',
     ],
-    atual: true,
   },
   {
     numero: '2',
@@ -138,6 +153,19 @@ const etapas = [
   },
 ];
 
+const modeloDaEtapa: Record<ChaveEtapaPerfil, string> = {
+  identificacao: 'Identificação',
+  representante: 'Identificação',
+  'documentos-medicos': 'Documentos médicos',
+  'obter-laudo': 'Documentos médicos',
+  'minha-cnh': 'Condutores autorizados',
+  condutores: 'Condutores autorizados',
+  'comprovacao-perda': 'Documentos médicos',
+  renda: 'Renda e acesso gov.br',
+  veiculo: 'Dados do veículo',
+  revisao: 'Revisão e dossiê',
+};
+
 interface RespostasQuiz {
   situacao?: string;
   categoria?: string;
@@ -152,7 +180,6 @@ function lerRespostasQuiz(): RespostasQuiz {
   }
 }
 
-// Nomes amigáveis (seed do backend) para os DocumentType do checklist.
 const rotulosDocumentos: Record<string, string> = {
   ID_CARD: 'RG ou CIN',
   CPF: 'CPF',
@@ -166,7 +193,6 @@ const rotulosDocumentos: Record<string, string> = {
   ICMS_AUTHORIZATION: 'Autorização de isenção do ICMS',
 };
 
-// DocumentType (backend) -> título da etapa do Overview.
 const etapaPorDocumento: Record<string, string> = {
   ID_CARD: 'Identificação',
   CPF: 'Identificação',
@@ -188,20 +214,28 @@ function rotuloDocumento(item: DocumentChecklistItemResponse) {
   return nome;
 }
 
-function obterEtapas(
+function perfilDaTela(
   respostas: RespostasQuiz,
-  perfilBackend?: ProcessProgressResponse['profileType'],
+  perfilBackend?: ProcessProgressResponse['profileType']
+): ResultadoPerfil {
+  const normalizadas = normalizarRespostas(respostas);
+
+  if (!normalizadas.situacao && perfilBackend) {
+    normalizadas.situacao =
+      perfilBackend === 'PCD_DRIVER' ? 'pcd-condutor' : 'pcd-nao-condutor';
+  }
+
+  return montarPerfil(normalizadas);
+}
+
+type EstadoEtapa = 'concluida' | 'atual' | 'bloqueada' | 'em-breve';
+
+function obterEtapas(
+  perfil: ResultadoPerfil,
+  concluidasLocais: ChaveEtapa[],
   checklist?: DocumentChecklistItemResponse[],
   currentStep?: number
 ) {
-  // Backend decide: PCD_DRIVER oculta condutores; PCD_NON_DRIVER mostra
-  // (cobre não-condutor e responsável). Sem backend, usa o quiz como antes.
-  const precisaDeCondutores =
-    perfilBackend !== undefined
-      ? perfilBackend === 'PCD_NON_DRIVER'
-      : respostas.situacao === 'pcd-nao-condutor' ||
-        respostas.situacao === 'responsavel';
-
   const documentosPorEtapa = new Map<string, string[]>();
   for (const item of checklist ?? []) {
     const titulo = etapaPorDocumento[item.documentType];
@@ -211,35 +245,41 @@ function obterEtapas(
     documentosPorEtapa.set(titulo, lista);
   }
 
-  return etapas
-    .filter(
-      (etapa) =>
-        etapa.titulo !== 'Condutores autorizados' ||
-        precisaDeCondutores
-    )
-    .map((etapa, index) => {
-      const numero = String(index + 1);
-      const documentosReais = documentosPorEtapa.get(etapa.titulo);
-      return {
-        ...etapa,
-        numero,
-        documentos: documentosReais ?? etapa.documentos,
-        atual:
-          currentStep !== undefined
-            ? Number(numero) === currentStep
-            : Boolean(etapa.atual),
-      };
-    });
-}
+  let liberada = true;
 
-const categorias: Record<string, string> = {
-  fisica: 'Deficiência física',
-  visual: 'Deficiência visual',
-  auditiva: 'Deficiência auditiva',
-  intelectual: 'Deficiência intelectual',
-  autismo: 'Autismo',
-  'nao-tenho-certeza': 'Deficiência a confirmar',
-};
+  return perfil.etapas.map((etapa, index) => {
+    const numero = String(index + 1);
+    const modelo = etapas.find(
+      (item) => item.titulo === modeloDaEtapa[etapa.chave]
+    );
+    const temTela = ETAPAS_COM_TELA.includes(etapa.chave);
+    const concluida =
+      temTela &&
+      (concluidasLocais.includes(etapa.chave) ||
+        (currentStep !== undefined && Number(numero) < currentStep));
+
+    let estado: EstadoEtapa;
+    if (!temTela) {
+      estado = 'em-breve';
+    } else if (concluida) {
+      estado = 'concluida';
+    } else if (liberada) {
+      estado = 'atual';
+      liberada = false;
+    } else {
+      estado = 'bloqueada';
+    }
+
+    return {
+      chave: etapa.chave,
+      numero,
+      icone: modelo?.icone,
+      titulo: etapa.titulo,
+      documentos: documentosPorEtapa.get(etapa.titulo) ?? etapa.documentos,
+      estado,
+    };
+  });
+}
 
 export default function Overview({
   aoSair,
@@ -247,6 +287,7 @@ export default function Overview({
   aoNavegar,
 }: OverviewProps) {
   const [respostas, setRespostas] = useState<RespostasQuiz>(lerRespostasQuiz);
+  const [concluidasLocais] = useState(lerEtapasConcluidas);
   const [progresso, setProgresso] =
     useState<ProcessProgressResponse | null>(null);
   const [checklist, setChecklist] = useState<
@@ -269,7 +310,7 @@ export default function Overview({
         setProgresso(prog);
         setChecklist(lista);
       } catch {
-        // Falha de rede/401: fallback silencioso para o quiz local.
+        return;
       }
     }
 
@@ -293,37 +334,22 @@ export default function Overview({
     };
   }, []);
 
+  const perfil = perfilDaTela(respostas, progresso?.profileType);
+
   const etapasVisiveis = obterEtapas(
-    respostas,
-    progresso?.profileType,
+    perfil,
+    concluidasLocais,
     checklist ?? undefined,
     progresso?.currentStep
   );
 
-  const percentual = Math.round(progresso?.progressPercentage ?? 0);
-  const concluidas = Math.min(
-    Math.max((progresso?.currentStep ?? 1) - 1, 0),
-    etapasVisiveis.length
+  const concluidas = etapasVisiveis.filter(
+    (etapa) => etapa.estado === 'concluida'
+  ).length;
+  const percentual = Math.max(
+    Math.round(progresso?.progressPercentage ?? 0),
+    Math.round((concluidas / etapasVisiveis.length) * 100)
   );
-
-  const perfil =
-    progresso?.profileType === 'PCD_DRIVER'
-      ? 'PcD condutor'
-      : respostas.situacao === 'responsavel'
-        ? 'Responsável'
-        : respostas.situacao === 'pcd-condutor'
-          ? 'PcD condutor'
-          : 'PcD não condutor';
-
-  const categoria = respostas.categoria
-    ? categorias[respostas.categoria] || 'Perfil personalizado'
-    : 'Perfil personalizado';
-
-  const precisaDeCondutores =
-    progresso?.profileType !== undefined
-      ? progresso.profileType === 'PCD_NON_DRIVER'
-      : respostas.situacao === 'pcd-nao-condutor' ||
-        respostas.situacao === 'responsavel';
 
   return (
     <PainelLayout aoSair={aoSair} aoNavegar={aoNavegar} itemAtivo="processo">
@@ -341,18 +367,9 @@ export default function Overview({
 
             <div className="overview-tags">
               <span>Montado para você:</span>
-              <b>{perfil}</b>
-              <b>{categoria}</b>
-              {precisaDeCondutores && <b>Condutores autorizados</b>}
-              {respostas.isencao && (
-                <b>
-                  {respostas.isencao === 'sim'
-                    ? 'Já possui isenção'
-                    : respostas.isencao === 'sim-perdi'
-                      ? 'Isenção anterior perdida'
-                      : 'Primeira solicitação'}
-                </b>
-              )}
+              {perfil.tags.map((tag) => (
+                <b key={tag}>{tag}</b>
+              ))}
             </div>
           </div>
 
@@ -387,14 +404,30 @@ export default function Overview({
           <section className="overview-steps">
             {etapasVisiveis.map((etapa) => (
               <article
-                key={etapa.numero}
-                className={`overview-step ${
-                  etapa.atual ? 'overview-step-current' : ''
+                key={etapa.chave}
+                className={`overview-step${
+                  etapa.estado === 'atual' ? ' overview-step-current' : ''
+                }${etapa.estado === 'concluida' ? ' overview-step-concluida' : ''}${
+                  etapa.estado === 'em-breve' ? ' overview-step-embreve' : ''
                 }`}
               >
                 <div className="overview-step-icon">{etapa.icone}</div>
 
-                <span className="overview-step-number">{etapa.numero}</span>
+                <span className="overview-step-number">
+                  {etapa.estado === 'concluida' ? (
+                    <svg viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                      <path
+                        d="m3.5 8.5 3 3 6-7"
+                        stroke="currentColor"
+                        strokeWidth="2.2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
+                    </svg>
+                  ) : (
+                    etapa.numero
+                  )}
+                </span>
 
                 <div className="overview-step-info">
                   <h2>{etapa.titulo}</h2>
@@ -405,15 +438,38 @@ export default function Overview({
                   </ul>
                 </div>
 
-                {etapa.atual ? (
+                {etapa.estado === 'atual' && (
                   <button
                     type="button"
                     className="overview-start"
-                    onClick={() => aoComecarEtapa?.(etapa.numero, etapa.titulo)}
+                    onClick={() =>
+                      aoComecarEtapa?.(etapa.numero, etapa.titulo, etapa.chave)
+                    }
                   >
                     Começar <span>→</span>
                   </button>
-                ) : (
+                )}
+
+                {etapa.estado === 'concluida' && (
+                  <div className="overview-step-acoes">
+                    <span className="overview-done-label">Concluída</span>
+                    <button
+                      type="button"
+                      className="overview-review"
+                      onClick={() =>
+                        aoComecarEtapa?.(etapa.numero, etapa.titulo, etapa.chave)
+                      }
+                    >
+                      Revisar
+                    </button>
+                  </div>
+                )}
+
+                {etapa.estado === 'em-breve' && (
+                  <span className="overview-soon">Em breve</span>
+                )}
+
+                {etapa.estado === 'bloqueada' && (
                   <span className="overview-lock" aria-label="Bloqueado">
                     <svg width="18" height="21" viewBox="0 0 18 21" fill="none" xmlns="http://www.w3.org/2000/svg">
                       <path d="M4 8H1V20H17V8H14M4 8H14M4 8V4C4 0 14 0 14 4V8" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" stroke="#7D8FA6" />

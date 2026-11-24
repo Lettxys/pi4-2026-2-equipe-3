@@ -13,10 +13,20 @@ import {
   extrairMensagemDeErro,
 } from '../services/api';
 import type { MeResponse } from '../services/api';
+import { montarPerfil } from '../services/regrasPerfil';
+import type { RespostasPerfil } from '../services/regrasPerfil';
+import {
+  EVENTO_RESPOSTAS,
+  lerRespostasAtivas,
+} from '../services/respostasPerfil';
 
 const ESCALAS_FONTE = [0.9, 1, 1.1, 1.2, 1.3];
 
-export type DestinoMenu = 'visao-geral' | 'processo' | 'documentos';
+export type DestinoMenu =
+  | 'visao-geral'
+  | 'processo'
+  | 'documentos'
+  | 'refazer-quiz';
 
 interface PainelLayoutProps {
   aoSair: () => void | Promise<void>;
@@ -70,6 +80,9 @@ export default function PainelLayout({
   const [tokenSenha, setTokenSenha] = useState('');
   const [usuario, setUsuario] = useState<DadosUsuario | null>(null);
   const contaRef = useRef<HTMLDivElement>(null);
+  const [respostasPerfil, setRespostasPerfil] = useState<RespostasPerfil | null>(
+    lerRespostasAtivas
+  );
 
   const iniciaisUsuario = (usuario?.nome ?? '')
     .trim()
@@ -92,6 +105,20 @@ export default function PainelLayout({
 
     return () => {
       ativo = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    function atualizar() {
+      setRespostasPerfil(lerRespostasAtivas());
+    }
+
+    window.addEventListener(EVENTO_RESPOSTAS, atualizar);
+    window.addEventListener('storage', atualizar);
+
+    return () => {
+      window.removeEventListener(EVENTO_RESPOSTAS, atualizar);
+      window.removeEventListener('storage', atualizar);
     };
   }, []);
 
@@ -175,6 +202,10 @@ export default function PainelLayout({
     setEtapaSenha(null);
     setTokenSenha('');
   }
+
+  const cartaoPerfil = respostasPerfil
+    ? montarPerfil(respostasPerfil).cartaoPerfil
+    : null;
 
   return (
     <div
@@ -337,12 +368,16 @@ export default function PainelLayout({
             </div>
           </nav>
 
-          <div className="overview-profile">
-            <span className="overview-profile-label">SEU PERFIL</span>
-            <strong>PcD não condutor</strong>
-            <p>Deficiência auditiva • 2 condutores autorizados</p>
-            <button type="button">Refazer quiz</button>
-          </div>
+          {cartaoPerfil && (
+            <div className="overview-profile">
+              <span className="overview-profile-label">SEU PERFIL</span>
+              <strong>{cartaoPerfil.titulo}</strong>
+              {cartaoPerfil.detalhe && <p>{cartaoPerfil.detalhe}</p>}
+              <button type="button" onClick={() => navegar('refazer-quiz')}>
+                Refazer quiz
+              </button>
+            </div>
+          )}
         </aside>
 
         {children}

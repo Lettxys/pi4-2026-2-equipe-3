@@ -1,25 +1,11 @@
-/*
-  Progresso das etapas concluídas, guardado no navegador (localStorage).
+import type { ChaveEtapaPerfil } from './regrasPerfil';
+import { lerUsuarioAtivo } from './respostasPerfil';
 
-  PROVISÓRIO: enquanto as etapas não validam no backend, é isto que
-  desbloqueia a etapa seguinte no Overview. Quando o backend passar a
-  avançar o `currentStep` (POST /api/processes/{id}/steps/{n}/validate),
-  o Overview já usa o maior entre os dois valores, e este arquivo pode
-  ser removido.
-*/
+const CHAVE_LEGADA = 'etapasConcluidas';
+const PREFIXO_USUARIO = 'etapasConcluidas:';
 
-const CHAVE_STORAGE = 'etapasConcluidas';
+export type ChaveEtapa = ChaveEtapaPerfil;
 
-export type ChaveEtapa =
-  | 'identificacao'
-  | 'documentos-medicos'
-  | 'condutores'
-  | 'renda'
-  | 'veiculo'
-  | 'revisao';
-
-// Título da etapa no Overview -> chave guardada.
-// (A numeração muda conforme o perfil, por isso não se guarda o número.)
 export const CHAVE_POR_TITULO: Record<string, ChaveEtapa> = {
   'Identificação': 'identificacao',
   'Documentos médicos': 'documentos-medicos',
@@ -29,13 +15,34 @@ export const CHAVE_POR_TITULO: Record<string, ChaveEtapa> = {
   'Revisão e dossiê': 'revisao',
 };
 
-const CHAVES_VALIDAS = Object.values(CHAVE_POR_TITULO);
+const CHAVES_VALIDAS: ChaveEtapa[] = [
+  'identificacao',
+  'representante',
+  'documentos-medicos',
+  'obter-laudo',
+  'minha-cnh',
+  'condutores',
+  'comprovacao-perda',
+  'renda',
+  'veiculo',
+  'revisao',
+];
+
+function chaveDoUsuario(): string | null {
+  const id = lerUsuarioAtivo();
+
+  return id === null ? null : `${PREFIXO_USUARIO}${id}`;
+}
 
 export function lerEtapasConcluidas(): ChaveEtapa[] {
+  const chave = chaveDoUsuario();
+
+  if (!chave) {
+    return [];
+  }
+
   try {
-    const dados: unknown = JSON.parse(
-      localStorage.getItem(CHAVE_STORAGE) || '[]'
-    );
+    const dados: unknown = JSON.parse(localStorage.getItem(chave) || '[]');
 
     if (!Array.isArray(dados)) {
       return [];
@@ -50,6 +57,12 @@ export function lerEtapasConcluidas(): ChaveEtapa[] {
 }
 
 export function marcarEtapaConcluida(chave: ChaveEtapa) {
+  const armazenamento = chaveDoUsuario();
+
+  if (!armazenamento) {
+    return;
+  }
+
   const atuais = lerEtapasConcluidas();
 
   if (atuais.includes(chave)) {
@@ -57,18 +70,39 @@ export function marcarEtapaConcluida(chave: ChaveEtapa) {
   }
 
   try {
-    localStorage.setItem(CHAVE_STORAGE, JSON.stringify([...atuais, chave]));
+    localStorage.setItem(armazenamento, JSON.stringify([...atuais, chave]));
   } catch {
-    // Sem armazenamento disponível: a etapa só não fica registrada
+    return;
   }
 }
 
-// Chamar ao sair da conta ou quando a sessão expirar, para o progresso
-// de uma pessoa não aparecer para outra no mesmo navegador.
+export function desmarcarEtapaConcluida(chave: ChaveEtapa) {
+  const armazenamento = chaveDoUsuario();
+
+  if (!armazenamento) {
+    return;
+  }
+
+  const atuais = lerEtapasConcluidas();
+
+  if (!atuais.includes(chave)) {
+    return;
+  }
+
+  try {
+    localStorage.setItem(
+      armazenamento,
+      JSON.stringify(atuais.filter((item) => item !== chave))
+    );
+  } catch {
+    return;
+  }
+}
+
 export function limparEtapasConcluidas() {
   try {
-    localStorage.removeItem(CHAVE_STORAGE);
+    localStorage.removeItem(CHAVE_LEGADA);
   } catch {
-    // Nada a fazer
+    return;
   }
 }

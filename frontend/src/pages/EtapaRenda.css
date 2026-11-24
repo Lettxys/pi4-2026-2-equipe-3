@@ -1,6 +1,32 @@
-﻿
-.etapaRenda-layout *
-{ box-sizing: border-box; }
+﻿.etapaRenda-layout {
+  
+  --er-fonte: Arial, Helvetica, sans-serif; 
+  --er-primaria: #16a095;
+  --er-primaria-escura: #0f7f77;
+  --er-primaria-clara: #eaf7f5;
+  --er-titulo: #14304f;
+  --er-texto: #4d6580;
+  --er-texto-suave: #6f849a;
+  --er-azul-suave: #5f7fa3;
+  --er-borda: #e3eaef;
+  --er-borda-campo: #d9e3ea;
+  --er-verde: #1f9d63;
+  --er-verde-claro: #e5f6ec;
+
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 22px 24px 40px;
+  color: var(--er-titulo);
+  font-family: var(--er-fonte);
+  font-size: 13px;
+}
+
+.etapaRenda-layout *,
+.etapaRenda-layout *::before,
+.etapaRenda-layout *::after {
+  box-sizing: border-box;
+}
 
 .etapaRenda-layout svg {
   display: inline-block;
@@ -8,186 +34,24 @@
   vertical-align: middle;
 }
 
-.etapaRenda-decoracao {
-  display: block;
-  max-width: 100%;
-  height: auto;
+.etapaRenda-layout button,
+.etapaRenda-layout select {
+  font-family: inherit;
 }
 
-.etapaRenda-layout {
-  width: 100%;
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 24px 20px 40px;
-  color: #193b59;
-  font-family: Arial, Helvetica, sans-serif;
-  font-size: 13px;
-}
-
-/* CABEÃ‡ALHO */
-
-.etapaRenda-header {
-  height: 53px;
-  display: flex;
-  align-items: center;
-  padding: 0 28px;
-  background: #ffffff;
-  border-bottom: 1px solid #e8f0ee;
-  gap: 35px;
-}
-
-.etapaRenda-logo {
-  color: #159e94;
-  font-size: 21px;
-  font-weight: 800;
-  min-width: 165px;
-}
-
-.etapaRenda-logo span {
-  color: #24b5a5;
-}
-
-.etapaRenda-breadcrumb {
-  display: flex;
-  align-items: center;
-  gap: 9px;
-  color: #58718b;
-  font-size: 11px;
-  flex: 1;
-}
-
-.etapaRenda-breadcrumb span:first-child {
-  color: #159e94;
-}
-
-.etapaRenda-breadcrumb strong {
-  color: #193b59;
-  font-weight: 600;
-}
-
-.etapaRenda-header-acoes {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-}
-
-.etapaRenda-header-acoes button {
-  border: none;
-  background: transparent;
-  color: #42627d;
-  cursor: pointer;
-  font-size: 11px;
-}
-
-.etapaRenda-header-acoes .etapaRenda-conta {
-  border-left: 1px solid #e3ecea;
-  padding-left: 16px;
-  color: #159e94;
-}
-
-/* CORPO E MENU */
-
-.etapaRenda-corpo {
-  display: flex;
-  min-height: calc(100vh - 53px);
-}
-
-.etapaRenda-sidebar {
-  width: 200px;
-  flex-shrink: 0;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  padding: 20px 14px 15px;
-  background: #ffffff;
-  border-right: 1px solid #e8f0ee;
-}
-
-.etapaRenda-menu {
-  display: flex;
-  flex-direction: column;
-  gap: 7px;
-}
-
-.etapaRenda-menu-item {
-  width: 100%;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 11px;
-  border: none;
-  border-radius: 8px;
-  background: transparent;
-  color: #36536d;
-  font-size: 12px;
-  text-align: left;
-  cursor: pointer;
-}
-
-.etapaRenda-menu-item span {
-  font-size: 16px;
-}
-
-.etapaRenda-menu-item.ativo {
-  background: #e1f4f1;
-  color: #159e94;
-  font-weight: 700;
-}
-
-.etapaRenda-perfil {
-  padding: 13px;
-  border: 1px solid #e1f0ed;
-  border-radius: 11px;
-  background: #f0f8f6;
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.etapaRenda-perfil-titulo {
-  color: #159e94;
-  font-size: 9px;
-  font-weight: 800;
-  letter-spacing: 1px;
-}
-
-.etapaRenda-perfil strong {
-  font-size: 11px;
-}
-
-.etapaRenda-perfil p {
-  margin: 0;
-  color: #60788c;
-  font-size: 10px;
-  line-height: 1.5;
-}
-
-.etapaRenda-perfil button {
-  width: fit-content;
-  padding: 0;
-  border: none;
-  background: transparent;
-  color: #159e94;
-  font-size: 10px;
-  font-weight: 700;
-  cursor: pointer;
-}
-
-/* CONTEÃšDO */
-
-.etapaRenda-main {
-  flex: 1;
-  min-width: 0;
-  padding: 17px 20px 35px;
+.etapaRenda-layout button:focus-visible,
+.etapaRenda-layout select:focus-visible,
+.etapaRenda-layout input:focus-visible,
+.etapaRenda-input-oculto:focus-visible + .etapaRenda-upload {
+  outline: 2px solid var(--er-primaria);
+  outline-offset: 2px;
 }
 
 .etapaRenda-conteudo {
-  width: 100%;
-  max-width: 1200px;
-  margin: 0 auto;
   display: grid;
-  grid-template-columns: minmax(0, 2.1fr) minmax(235px, 0.95fr);
-  gap: 26px;
+  grid-template-columns: minmax(0, 1.85fr) minmax(260px, 1fr);
+  gap: 28px;
+  align-items: start;
 }
 
 .etapaRenda-principal {
@@ -197,64 +61,64 @@
 .etapaRenda-voltar {
   display: flex;
   align-items: center;
-  gap: 7px;
+  gap: 8px;
   padding: 0;
-  margin-bottom: 13px;
+  margin-bottom: 12px;
   border: none;
   background: transparent;
-  color: #42627d;
-  font-size: 11px;
+  color: var(--er-titulo);
+  font-size: 12px;
   cursor: pointer;
 }
 
-.etapaRenda-voltar span {
-  font-size: 17px;
-  color: #159e94;
+.etapaRenda-voltar svg {
+  width: 16px;
+  height: 12px;
 }
-
-/* PROGRESSO */
 
 .etapaRenda-progresso-etapas {
   display: grid;
   grid-template-columns: repeat(6, 1fr);
-  gap: 5px;
-  margin-bottom: 13px;
+  gap: 6px;
+  margin-bottom: 14px;
 }
 
 .etapaRenda-progresso-item {
-  height: 4px;
+  height: 5px;
   border-radius: 10px;
-  background: #dce9e8;
+  background: #e3ebf1;
 }
 
 .etapaRenda-progresso-item.concluido {
-  background: #159e94;
+  background: var(--er-primaria);
 }
 
 .etapaRenda-indicador {
   display: block;
-  margin-bottom: 5px;
-  color: #159e94;
+  margin-bottom: 6px;
+  color: var(--er-azul-suave);
   font-size: 10px;
-  font-weight: 800;
-  letter-spacing: 1px;
+  font-weight: 600;
+  letter-spacing: 2px;
 }
 
 .etapaRenda-principal h1 {
-  margin: 0 0 7px;
-  color: #193b59;
-  font-size: clamp(23px, 2.4vw, 32px);
-  letter-spacing: -1px;
+  margin: 0 0 8px;
+  color: var(--er-titulo);
+  font-size: clamp(26px, 3vw, 34px);
+  font-weight: 700;
+  line-height: 1.15;
+  letter-spacing: -0.5px;
 }
 
 .etapaRenda-principal h1 span {
-  color: #159e94;
+  color: var(--er-primaria);
 }
 
 .etapaRenda-subtitulo {
-  margin: 0 0 13px;
-  color: #60788c;
-  font-size: 12px;
+  margin: 0 0 12px;
+  color: var(--er-texto);
+  font-size: 14px;
   line-height: 1.5;
 }
 
@@ -262,12 +126,14 @@
   display: flex;
   align-items: center;
   gap: 12px;
-  margin-bottom: 15px;
-  color: #42627d;
-  font-size: 10px;
+  max-width: 550px;
+  margin-bottom: 16px;
+  color: var(--er-titulo);
+  font-size: 11px;
 }
 
 .etapaRenda-progresso-interno strong {
+  font-weight: 700;
   white-space: nowrap;
 }
 
@@ -276,28 +142,26 @@
   height: 6px;
   overflow: hidden;
   border-radius: 10px;
-  background: #dcece8;
+  background: #dcebe8;
 }
 
 .etapaRenda-barra div {
   height: 100%;
   border-radius: inherit;
-  background: #159e94;
+  background: var(--er-primaria);
   transition: width 0.3s ease;
 }
 
 .etapaRenda-progresso-interno > span {
-  color: #159e94;
-  font-weight: 700;
+  color: var(--er-primaria);
+  font-weight: 600;
 }
 
-/* CARTÃ•ES */
-
 .etapaRenda-card {
-  padding: 16px;
-  margin-bottom: 13px;
-  border: 1px solid #e0ece9;
-  border-radius: 11px;
+  padding: 18px 20px 20px;
+  margin-bottom: 14px;
+  border: 1px solid var(--er-borda);
+  border-radius: 14px;
   background: #ffffff;
 }
 
@@ -306,119 +170,200 @@
   justify-content: space-between;
   align-items: flex-start;
   gap: 10px;
-  margin-bottom: 14px;
+  margin-bottom: 16px;
 }
 
 .etapaRenda-card-cabecalho h2 {
-  margin: 0 0 6px;
-  color: #193b59;
-  font-size: 13px;
+  margin: 0 0 8px;
+  color: var(--er-titulo);
+  font-size: 15px;
+  font-weight: 700;
 }
 
 .etapaRenda-card-cabecalho p {
   margin: 0;
-  color: #71869a;
-  font-size: 10px;
+  color: var(--er-texto-suave);
+  font-size: 12px;
   line-height: 1.5;
 }
 
 .etapaRenda-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
   flex-shrink: 0;
-  padding: 5px 9px;
+  padding: 4px 10px;
   border-radius: 20px;
-  background: #f0f4f7;
-  color: #708398;
-  font-size: 9px;
+  background: #eef2f6;
+  color: var(--er-texto-suave);
+  font-size: 10px;
+  font-weight: 500;
+}
+
+.etapaRenda-status svg {
+  width: 10px;
+  height: 8px;
 }
 
 .etapaRenda-status.status-ok {
-  background: #e5f7ed;
-  color: #299b63;
-  font-weight: 700;
+  background: var(--er-verde-claro);
+  color: var(--er-verde);
+  font-weight: 600;
 }
 
 .etapaRenda-pergunta {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 9px;
 }
 
 .etapaRenda-pergunta > strong {
-  color: #294966;
-  font-size: 11px;
+  color: var(--er-titulo);
+  font-size: 12px;
+  font-weight: 700;
 }
 
 .etapaRenda-opcoes {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 7px;
+  gap: 8px;
 }
 
 .etapaRenda-opcoes button {
-  min-height: 34px;
+  min-height: 36px;
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 6px;
   padding: 8px;
-  border: 1px solid #dceae8;
-  border-radius: 7px;
+  border: 1.5px solid var(--er-borda-campo);
+  border-radius: 8px;
   background: #ffffff;
-  color: #42627d;
-  font-size: 10px;
+  color: var(--er-titulo);
+  font-size: 12px;
   cursor: pointer;
-  transition: 0.2s;
+  transition: border-color 0.2s;
+}
+
+.etapaRenda-opcoes button svg {
+  width: 11px;
+  height: 8px;
 }
 
 .etapaRenda-opcoes button:hover {
-  border-color: #159e94;
+  border-color: var(--er-primaria);
 }
 
 .etapaRenda-opcoes button.selecionado {
-  border: 1.5px solid #159e94;
-  background: #e9f7f5;
-  color: #159e94;
-  font-weight: 700;
+  border-color: var(--er-primaria);
+  background: var(--er-primaria-clara);
+  color: var(--er-primaria-escura);
+  font-weight: 600;
 }
-
-/* UPLOAD */
 
 .etapaRenda-upload-linha {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 115px;
+  grid-template-columns: minmax(0, 1fr) 134px;
   gap: 12px;
   align-items: end;
-  margin-top: 9px;
+  margin-top: 10px;
+}
+
+.etapaRenda-upload-bloco {
+  position: relative;
+  min-width: 0;
 }
 
 .etapaRenda-upload {
-  min-height: 40px;
+  position: relative;
+  min-height: 50px;
   display: flex;
   align-items: center;
-  gap: 9px;
-  padding: 8px;
-  border: 1px dashed #8dd4ca;
-  border-radius: 7px;
-  background: #f7fcfb;
-  color: #60788c;
-  font-size: 10px;
+  justify-content: center;
+  gap: 10px;
+  padding: 8px 12px;
+  border: 1.5px dashed #8fd6cc;
+  border-radius: 10px;
+  background: #f4fbfa;
+  color: #35516d;
+  font-size: 11px;
   line-height: 1.5;
+  text-align: center;
   cursor: pointer;
   overflow-wrap: anywhere;
+  transition: background 0.2s, border-color 0.2s;
 }
 
-.etapaRenda-upload input {
-  display: none;
+.etapaRenda-upload.arrastando {
+  border-color: var(--er-primaria);
+  background: #e3f5f2;
+}
+
+.etapaRenda-input-oculto {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
 }
 
 .etapaRenda-upload strong {
-  color: #159e94;
+  color: var(--er-primaria);
+  text-decoration: underline;
 }
 
 .etapaRenda-upload-icone {
+  display: inline-flex;
   flex-shrink: 0;
-  color: #159e94;
-  font-size: 19px;
+  color: var(--er-primaria);
+}
+
+.etapaRenda-arquivo {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 50px;
+  padding: 8px 16px;
+  border: 1px solid #dcebe8;
+  border-radius: 8px;
+  background: #f1f8f6;
+}
+
+.etapaRenda-arquivo svg {
+  width: 20px;
+  height: 20px;
+  color: var(--er-primaria);
+}
+
+.etapaRenda-arquivo-nome {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  color: var(--er-titulo);
+  font-size: 12px;
+  font-weight: 700;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.etapaRenda-arquivo-acoes {
+  display: flex;
+  flex-shrink: 0;
+  gap: 14px;
+}
+
+.etapaRenda-arquivo-acoes button {
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: var(--er-primaria);
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.etapaRenda-arquivo-acoes button:hover:not(:disabled) {
+  text-decoration: underline;
 }
 
 .etapaRenda-ano {
@@ -428,25 +373,25 @@
 }
 
 .etapaRenda-ano label {
-  color: #60788c;
-  font-size: 10px;
+  color: #35516d;
+  font-size: 11px;
 }
 
 .etapaRenda-ano select {
   width: 100%;
-  height: 35px;
-  padding: 0 9px;
-  border: 1px solid #dceae8;
-  border-radius: 7px;
-  background: #ffffff;
-  color: #294966;
-  font-size: 11px;
+  height: 34px;
+  padding: 0 32px 0 12px;
+  border: 1px solid var(--er-borda-campo);
+  border-radius: 8px;
+  background: #ffffff url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8' fill='none'><path d='M1 1.5L6 6.5L11 1.5' stroke='%2335516d' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/></svg>") no-repeat right 12px center;
+  color: var(--er-titulo);
+  font-size: 12px;
+  appearance: none;
+  -webkit-appearance: none;
 }
 
-/* CONTA GOV.BR */
-
 .etapaRenda-card-gov {
-  border-color: #b9e6dc;
+  border-color: #8fd6cc;
 }
 
 .etapaRenda-opcoes-gov {
@@ -459,153 +404,170 @@
 
 .etapaRenda-dica {
   display: flex;
-  align-items: flex-start;
-  gap: 7px;
-  margin-top: 9px;
-  padding: 8px;
+  align-items: center;
+  gap: 8px;
+  margin-top: 10px;
+  padding: 8px 12px;
   border-radius: 6px;
-  background: #e6f6ee;
-  color: #299b63;
-  font-size: 10px;
+  background: var(--er-verde-claro);
+  color: var(--er-verde);
+  font-size: 11px;
   line-height: 1.5;
-}
-
-.etapaRenda-dica span {
-  font-weight: 800;
 }
 
 .etapaRenda-checkbox {
   display: flex;
-  align-items: flex-start;
-  gap: 8px;
-  margin-top: 9px;
-  color: #42627d;
-  font-size: 10px;
+  align-items: center;
+  gap: 9px;
+  margin-top: 12px;
+  color: var(--er-titulo);
+  font-size: 12px;
   line-height: 1.5;
   cursor: pointer;
 }
 
 .etapaRenda-checkbox input {
-  width: 14px;
-  height: 14px;
+  flex-shrink: 0;
+  width: 16px;
+  height: 16px;
   margin: 0;
-  accent-color: #159e94;
+  border: 1.5px solid #b9c9d4;
+  border-radius: 4px;
+  background: #ffffff;
+  appearance: none;
+  -webkit-appearance: none;
+  cursor: pointer;
+}
+
+.etapaRenda-checkbox input:checked {
+  border-color: var(--er-verde);
+  background: var(--er-verde) url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='8' viewBox='0 0 13 9' fill='none'><path d='M1 4.2L4.6 7.8L11.4 1' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/></svg>") no-repeat center;
 }
 
 .etapaRenda-aviso {
   margin-top: 12px;
-  padding: 10px;
+  padding: 10px 12px;
   border-radius: 7px;
   background: #fff7e9;
   color: #946b26;
-  font-size: 11px;
+  font-size: 12px;
   line-height: 1.5;
 }
 
 .etapaRenda-aviso a {
   display: block;
   margin-top: 5px;
-  color: #159e94;
+  color: var(--er-primaria-escura);
   font-weight: 700;
 }
-
-/* PAINEL DIREITO */
 
 .etapaRenda-lateral {
   display: flex;
   flex-direction: column;
-  gap: 13px;
+  gap: 14px;
 }
 
 .etapaRenda-info-card,
 .etapaRenda-ajuda-card,
 .etapaRenda-concluir-card {
-  padding: 15px;
-  border: 1px solid #e4efec;
-  border-radius: 12px;
+  padding: 16px 18px;
+  border: 1px solid var(--er-borda);
+  border-radius: 14px;
   background: #ffffff;
 }
 
 .etapaRenda-lateral h3 {
-  margin: 0 0 10px;
-  color: #193b59;
-  font-size: 12px;
+  margin: 0 0 12px;
+  color: var(--er-titulo);
+  font-size: 15px;
+  font-weight: 700;
 }
 
 .etapaRenda-info-card p {
   display: flex;
   align-items: flex-start;
-  gap: 7px;
-  margin: 0 0 8px;
-  color: #60788c;
-  font-size: 10px;
-  line-height: 1.6;
+  gap: 8px;
+  margin: 0 0 10px;
+  color: var(--er-texto);
+  font-size: 11.5px;
+  line-height: 1.55;
 }
 
 .etapaRenda-info-card p:last-child {
   margin-bottom: 0;
 }
 
-.etapaRenda-info-card p span {
-  flex-shrink: 0;
+.etapaRenda-info-card p svg {
   width: 16px;
-  text-align: center;
-  color: #299b63;
-  font-weight: 800;
+  height: 16px;
+  margin-top: 1px;
+  color: var(--er-verde);
 }
 
 .etapaRenda-ajuda-card {
-  border-color: #f2dfb8;
-  background: #fff9ed;
+  border-color: #f6e3bb;
+  background: #fff6e5;
 }
 
 .etapaRenda-ajuda-card p {
   margin: 0;
-  color: #8c754c;
-  font-size: 10px;
-  line-height: 1.6;
+  color: var(--er-texto);
+  font-size: 11.5px;
+  line-height: 1.55;
 }
 
 .etapaRenda-concluir-card {
-  border-color: #d7efea;
-  background: #eaf7f4;
+  border-color: #d3ece7;
+  background: #eaf6f3;
 }
 
 .etapaRenda-concluir-card button {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 6px;
+  gap: 8px;
   width: 100%;
-  height:30px;
+  height: 40px;
+  border: none;
+  border-radius: 8px;
+  background: var(--er-primaria);
+  color: #ffffff;
+  font-size: 13px;
+  font-weight: 600;
   text-align: center;
-  border-radius: 5px;
-}
-.etapa4-concluir-card button svg {
-  display: block;
-  flex-shrink: 0;
+  cursor: pointer;
+  transition: background 0.2s;
 }
 
-.etapa4-concluir-card button span {
-  display: inline-block;
+.etapaRenda-concluir-card button:hover:not(:disabled) {
+  background: var(--er-primaria-escura);
+}
+
+.etapaRenda-concluir-card button svg {
+  display: block;
+  width: 14px;
+  height: 16px;
 }
 
 .etapaRenda-concluir-card button:disabled {
-  background: #d5e4e6;
-  color: #849ba9;
+  background: #d3dfe4;
+  color: #8aa0ae;
   cursor: not-allowed;
 }
 
 .etapaRenda-concluir-card > span {
   display: block;
-  margin-top: 8px;
-  color: #71869a;
-  font-size: 9px;
+  margin-top: 10px;
+  color: var(--er-texto-suave);
+  font-size: 10px;
   line-height: 1.5;
   text-align: center;
 }
 
-/* RESPONSIVIDADE */
+.etapaRenda-concluir-card > span.etapaRenda-erro {
+  color: #c0392b;
+  font-weight: 600;
+}
 
 @media (max-width: 950px) {
   .etapaRenda-conteudo {
@@ -615,6 +577,7 @@
   .etapaRenda-lateral {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
+    align-items: start;
   }
 
   .etapaRenda-concluir-card {
@@ -623,29 +586,7 @@
 }
 
 @media (max-width: 650px) {
-  .etapaRenda-header {
-    padding: 0 15px;
-    gap: 12px;
-  }
-
-  .etapaRenda-logo {
-    min-width: auto;
-  }
-
-  .etapaRenda-breadcrumb {
-    display: none;
-  }
-
-  .etapaRenda-header-acoes {
-    margin-left: auto;
-    gap: 8px;
-  }
-
-  .etapaRenda-sidebar {
-    display: none;
-  }
-
-  .etapaRenda-main {
+  .etapaRenda-layout {
     padding: 17px 13px 30px;
   }
 
@@ -658,7 +599,7 @@
   }
 }
 
-@media (max-width: 430px) {
+@media (max-width: 560px) {
   .etapaRenda-upload-linha {
     grid-template-columns: 1fr;
   }
@@ -668,19 +609,10 @@
   }
 
   .etapaRenda-card {
-    padding: 13px;
+    padding: 14px;
   }
 
   .etapaRenda-card-cabecalho {
     flex-direction: column;
   }
-
-  .etapaRenda-status {
-    align-self: flex-start;
-  }
 }
-.etapaRenda-erro {
-  color: #c0392b;
-  font-weight: 600;
-}
-

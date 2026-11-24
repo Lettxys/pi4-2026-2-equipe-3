@@ -100,7 +100,7 @@
 }
 
 .etapa-subtitulo {
-  margin: calc(9 * var(--ue)) 0 calc(18 * var(--ue));
+  margin: calc(9 * var(--ue)) 0 0;
 
   color: #2f5a8f;
   font-size: calc(18 * var(--ue));
@@ -453,23 +453,6 @@
   transition:
     background 0.2s,
     border-color 0.2s;
-}
-
-.etapa-doc-rotulo {
-  display: block;
-  margin-bottom: calc(-12 * var(--ue));
-
-  color: #2f5a8f;
-  font-size: calc(12 * var(--ue));
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: calc(0.4 * var(--ue));
-}
-
-.etapa-documentos-grid {
-  display: flex;
-  flex-direction: column;
-  gap: calc(30 * var(--ue));
 }
 
 .etapa-soltar.arrastando {

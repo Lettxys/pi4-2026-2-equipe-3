@@ -16,7 +16,6 @@ import Documentos from './pages/Documentos';
 import type { DestinoMenu } from './components/PainelLayout';
 import EtapaVeiculo from './pages/EtapaVeiculo';
 import EtapaRevisao from './pages/EtapaRevisao';
-import EtapaCondutores from './pages/EtapaCondutores';
 import {
   EVENTO_SESSAO_EXPIRADA,
   buscarUsuarioLogado,
@@ -35,7 +34,6 @@ type Pagina =
   | 'overview'
   | 'etapa-identificacao'
   | 'etapa-documentos-medicos'
-  | 'etapa-condutores'
   | 'etapa-renda'
   | 'etapa-veiculo'
   | 'etapa-revisao'
@@ -59,7 +57,6 @@ const PAGINAS_PROTEGIDAS: Pagina[] = [
   'etapa-veiculo',
   'etapa-revisao',
   'documentos',
-  'etapa-condutores',
 ];
 
 function ehProtegida(pagina: Pagina): boolean {
@@ -67,7 +64,7 @@ function ehProtegida(pagina: Pagina): boolean {
 }
 
 function App() {
-  const [pagina, setPagina] = useState<Pagina>('landing');
+  const [pagina, setPagina] = useState<Pagina>('overview');
   const [modal, setModal] = useState<Modal>(null);
   const [emailRecuperacao, setEmailRecuperacao] = useState('');
   const [tokenRedefinicao, setTokenRedefinicao] = useState('');
@@ -253,16 +250,6 @@ function App() {
           }}
           aoNavegar={navegar}
           abrirCalculadora={() => irPara('calculadora')}
-        />
-      )}
-      {paginaAtual === 'etapa-condutores' && (
-        <EtapaCondutores
-          aoSair={deslogar}
-          voltarTrilha={() => irPara('overview')}
-          aoConcluir={() => irPara('etapa-renda')}
-          aoEtapaConcluida={() => marcarEtapaConcluida('condutores')}
-          aoNavegar={navegar}
-          beneficiarioEhCondutor={false}
         />
       )}
 
